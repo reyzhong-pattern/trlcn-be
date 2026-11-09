@@ -1,0 +1,8 @@
+﻿user_id,name,email,role,brands,status,source,last_active
+U001,Demo Admin,admin.demo@example.com,Admin,Thorne;KELO-COTE;Swanson,Active,Manual,2026-10-28
+U002,Chen Yu,chen.yu@example.com,Operator,Thorne,Active,Okta,2026-10-27
+U003,Lin Mei,lin.mei@example.com,Operator,KELO-COTE,Active,Okta,2026-10-28
+U004,Zhao Hao,zhao.hao@example.com,Operator,Thorne;Swanson,Active,Okta,2026-10-21
+U005,Wang Xin,wang.xin@example.com,Operator,Swanson,Invited,Okta,
+U006,Liu Jia,liu.jia@example.com,Operator,,Active,Okta,2026-10-15
+U007,Sun Qi,sun.qi@example.com,Admin,KELO-COTE,Deactivated,Okta,2026-08-30
