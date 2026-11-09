@@ -1,0 +1,13 @@
+﻿brand,platform,status,last_sync,annual_gmv_cny_from_mcp
+Thorne,douyin,connected,2026-10-28T08:00,19283000.0
+Thorne,red,connected,2026-10-28T08:00,6398000.0
+Thorne,tmall,connected,2026-10-28T08:00,44758000.0
+Thorne,jd,connected,2026-10-28T08:00,19543000.0
+KELO-COTE,douyin,connected,2026-10-28T08:00,13929000.0
+KELO-COTE,red,connected,2026-10-28T08:00,3141000.0
+KELO-COTE,tmall,connected,2026-10-28T08:00,5767000.0
+KELO-COTE,jd,not_connected,,
+Swanson,douyin,connected,2026-10-28T08:00,3040000.0
+Swanson,red,not_connected,,
+Swanson,tmall,connected,2026-10-28T08:00,38756000.0
+Swanson,jd,connected,2026-10-28T08:00,11898000.0

@@ -1,0 +1,8 @@
+# UI API contract for FE. Status: v1 PENDING — placeholder only, no endpoints defined yet.
+# Written by Claude Code in a later task from spec v0.4 + accepted decisions (see contract/README.md).
+openapi: 3.1.0
+info:
+  title: TrendVision Live — Performance Analytics UI API
+  version: 0.0.0-pending
+  description: Placeholder. v1 pending. Do not build against this until v1 is published.
+paths: {}

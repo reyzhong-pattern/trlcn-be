@@ -1,0 +1,19 @@
+# Real data never goes into git (AGENTS.md rule 5).
+# Keep spreadsheet and data files under data/ out of git, at any depth.
+data/**/*.xlsx
+data/**/*.xls
+data/**/*.csv
+data/**/*.parquet
+data/**/*.json
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+
+# Python / tooling caches
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.DS_Store
