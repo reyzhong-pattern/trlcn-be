@@ -839,6 +839,98 @@ PROPOSED (DQ-23): the tag's group and window are used, because tags "stay on the
 - Clamp: 2026-03-31 → MoM 2026-02-28. 2028-02-29 → YoY 2027-02-28.
 - GMV 12,000.00 vs 10,000.00 → **0.2000** (+20.0%). CVR 0.0350 vs 0.0300 → **+0.0050** (+0.50 pp).
 
+
+## 14. Action Cards and comparisons
+
+### ALG-40 Action Card expected recovery (P50, P75)
+
+**Definition.** PROPOSED in decision 0008 (`docs/decisions/0008-action-card-expected-recovery.md`), answering DQ-4. It matches the figures on mockup board 1.4 (see 0008 › Evidence). This is the "¥ and UV if the stage reached P50, then P75" figure (`spec:523`).
+
+For a stage s with 4-dp session rate `r_s` (ALG-04) and a target `T`, which is the grading group's P50 or P75 for that stage (ALG-11, ALG-13):
+
+```
+r_s > T → status "above"   (no figures)
+r_s = T → status "at"      (no figures)
+r_s < T →
+  extra_out    = input_uv(s) × (T − r_s)               input_uv = the stage's denominator (ALG-04)
+  stage ①–③:  extra_buyers = extra_out × r_{s+1} × … × r_④
+  stage ④:    extra_buyers = extra_out
+  stage ⑤:    extra_kept   = extra_out                 (= paid_buyers × (T − r_⑤))
+  extra_gmv    = (extra_buyers or extra_kept) × gpb    gpb as in ALG-25
+each of extra_out, extra_buyers / extra_kept, extra_gmv = round2(exact value), computed from unrounded intermediates
+```
+
+**Inputs.** The session's counts and 4-dp stage rates; the group's stage P50 and P75; `gpb` (the session's GMV per buyer, or the group median when it has no buyers, ALG-25).
+
+**Not enough data.** The stage has no tier (ALG-20: Building, metric not ready, or input below its minimum) → no figures. The card is the neutral "Not enough data" card (`spec:525`).
+
+**Edge cases.**
+- Any downstream rate is 0, for example a session with no buyers → `status = "no_downstream_conversion"`, no figures. PROPOSED, 0008 open question 1.
+- A downstream rate below its own stage minimum is still used: it is the session's own rate, not a grade.
+- Severity comes from the stage tier: WEAK Critical, MID Action needed, GOOD Watch, STAR Strong (`spec:521`).
+- This is a separate output from recoverable revenue (`spec:524`; AGENTS.md rule 8).
+
+**Example.** S-A (ALG-01) has rates ① 0.1500, ② 0.8000, ③ 0.2500, ④ 0.2000, ⑤ 0.8333 and gpb 350.00.
+
+| Stage | P50 | P75 | At P50 | At P75 |
+|---|---|---|---|---|
+| ① | 0.1200 | 0.2000 | above | 2,000 × 0.05 = 100.00 out → × 0.8 × 0.25 × 0.2 = **4.00 buyers**, **1,400.00** |
+| ② | 0.8000 | 0.9000 | at | 30.00 out → **1.50 buyers**, **525.00** |
+| ③ | 0.3000 | 0.4000 | 12.00 out → **2.40 buyers**, **840.00** | 36.00 → **7.20**, **2,520.00** |
+| ④ | 0.1800 | 0.2500 | above | **3.00 buyers**, **1,050.00** |
+| ⑤ | 0.9000 | 0.9500 | 12 × 0.0667 = **0.80 kept**, **280.14** | **1.40 kept**, **490.14** |
+
+Zero-buyer session (exposed 3,000, entered 200, product-exposed 150, clicked 40, buyers 0), stage ② to P50 0.9000: 30.00 extra out, but ④ = 0 → **no_downstream_conversion**.
+
+### ALG-41 Comparison "biggest difference" facts
+
+**Definition.** PROPOSED in decision 0009 (`docs/decisions/0009-comparison-difference-sentences.md`), answering DQ-30. It covers the channel comparison (`spec:430`) and the host comparison (`spec:653`). Score returns **facts**; the sentences are rendered from per-language templates (`spec:177`, R39), never by an LLM.
+
+1. **Candidates, in tie-break order:**
+   - CVR, ①, ②, ③, ④, ⑤, AOV, Avg GMV / session.
+   - Host comparison also: Total GMV, Avg exposure / session.
+   - All pooled per series (ALG-10, ALG-29).
+2. **Per metric:**
+   - The series with a value are sorted by value, descending, then by series order.
+   - `leader` = first. `ratio = leader ÷ runner-up`, `lo = ratio`, `hi = leader ÷ min(others)`.
+   - Skip the metric when fewer than 2 series have a value, the top two tie, or the runner-up is 0.
+3. **Kept facts:** `ratio ≥ 1.20`, sorted by ratio descending, then candidate order.
+4. **Sentences:**
+   - S1 = the CVR fact, if kept.
+   - Then repeat: take the leader of the largest remaining fact whose leader has not been named yet, and add up to 2 of that leader's facts.
+   - Channel: at most 2 clauses, rendered as one sentence. Host: at most 3 sentences.
+   - Nothing kept → the fallback sentence.
+5. **Ratio display:** `round1` below 10, `round0` at 10 or more (half up). A range collapses to one number when `lo` and `hi` round to the same value.
+
+**Inputs.** The series' pooled values, as shown in the comparison panel.
+
+**Not enough data.**
+- A series' rate counts only when its pooled input meets the ALG-22 minimum.
+- A host greyed "Not enough data" (ALG-30) gives no values (`spec:618`, `spec:944`).
+
+**Edge cases.**
+- Every value is "higher is better", so no metric needs inverting.
+- With 2 series, `lo = hi`.
+- Values are compared exactly (C1). Ratios are computed exactly and rounded only for display.
+
+**Example 1** (the mockup's channel numbers, `spec:428`: Self-operated vs Influencer).
+
+Kept facts: CVR SO 10.14 → **10×**; AOV Inf **3.7×**; ② SO 3.2×; ① Inf **2.8×**; ③ SO 2.2×; GMV/session Inf 2.1×; ④ SO 1.4×.
+
+- S1 = CVR (Self-operated).
+- Next leader not yet named: Influencer → AOV 3.7×, ① 2.8×.
+- Rendered: "Self-operated converts entrants 10× better than Influencer (CVR 2.23% vs 0.22%), while Influencer brings 3.7× the AOV and 2.8× the entry rate of Self-operated."
+
+**Example 2** (the mockup's 4-host numbers, `spec:651`).
+
+Kept facts: GMV/session LisaWang 10.64 → **11×** (11–13×); AOV LisaWang **7.1×** (7.1–7.9×); CVR Thorne悦恩运动极限海外店 **6.6×** (6.6–12×); Total GMV LisaWang 5.5×; ② Thorne 2.7×; ③ Thorne 1.5×; ④ Thorne 1.2×. Not kept: ① 1.07×, ⑤ 1.08×, exposure / session 1.005×.
+
+- S1 = CVR (Thorne, 6.6–12×).
+- S2 = LisaWang: GMV/session 11–13× and AOV 7.1–7.9×.
+- No third leader has a kept fact.
+
+**Example 3.** CVR {0.0350, 0.0320} and AOV {300, 280}: ratios 1.09 and 1.07 → nothing kept → the **fallback** sentence. With CVR {0.0200, 0.0000}, the runner-up is 0 → that metric is skipped.
+
 ---
 
 ## Stored or computed
@@ -913,7 +1005,7 @@ Every item below is also in [decision-queue.md](decision-queue.md) as **PROPOSED
 | DQ-27 | Room-export fields for stage ⑤ and refund rate: kept buyers and refunded orders are not in the reported columns ([room-export.md](data-model/room-export.md)) | Derive (ALG-01, ALG-07, ALG-08) or add fields to the export | **Derive as proposed; verify against a real header** (also R36 / G3 provisional retention, `spec:1012`, `spec:1182`) | Rey + data owner | ALG-01, ALG-07 |
 | DQ-28 | How Land knows a session is `live` | a) a status column; b) end time missing; c) export time < end time | **Decide from a real header** (UNVERIFIED) | Rey + data owner | ALG-02 |
 | DQ-29 | Re-exports of the same session (e.g. refunds change) | a) latest file wins, history kept; b) first wins | **a** | Rey | ALG-02 |
-| DQ-30 | "Largest difference" sentences (`spec:430`, `spec:653`): no metric or measure defined | Relative (×) vs absolute (pp) difference; which metrics | **Claude Code drafts a rule with the contract**; numbers from Score, text from templates (R39) | Claude Code drafts, Rey approves | BE-24 |
+| DQ-30 | Drafted by Claude Code 2026-11-10 → ALG-41 and decision 0009 (PROPOSED; Rey approves) | Threshold, metric set and zh wording: see 0009 › Open questions | **ALG-41** | Claude Code drafts, Rey approves | ALG-41, BE-24 |
 | DQ-31 | Leaderboard rank ties | `host_id` vs name vs sessions | **`host_id` ascending** (stable) | Rey | ALG-30 |
 | DQ-32 | Avg watch time column and its unit | Per entered user vs per viewer-minute | **Verify against a real header** (UNVERIFIED) | Rey + data owner | ALG-08 |
 | DQ-33 | How `as_of` is set | a) the latest complete export day from the file log; b) the sync date − 1 | **a** (UNVERIFIED: file-log fields are TBD, [scope.md](scope.md)) | Rey + data owner | C4, ALG-12 |
