@@ -12,7 +12,7 @@
 |---|---|
 | `spec:N` | `upstream/design-pack/03-product-spec-v0.4.md` line N |
 | `gen:N` | `upstream/design-pack/generate_demo_data.py` line N |
-| `0001` … `0004` | `docs/decisions/0001-algorithm-follows-spec-v0.4.md`, `0002-v1-landing-room-export-only.md`, `0003-entered-uv-definition.md`, `0004-hifi-wins-and-resolved-rules.md` |
+| `0001` … `0007` | `docs/decisions/0001-algorithm-follows-spec-v0.4.md`, `0002-v1-landing-room-export-only.md`, `0003-entered-uv-definition.md`, `0004-hifi-wins-and-resolved-rules.md`, `0005-benchmark-snapshots-read-time-grading.md`, `0006-adopt-quarantine-rules.md`, `0007-recoverable-revenue-run-rate.md` |
 | `DQ-n` | an item in [decision-queue.md](decision-queue.md) |
 
 Decision IDs: the step-05 brief named "D-01", "D-14" and "D-10". The repo has no such files. D-01 = **0001**, D-14 = **0003**. "Fetch is out of scope" (D-10) is not a decision record; it is `AGENTS.md` rule 7 and [scope.md](scope.md).
@@ -86,7 +86,7 @@ Decision IDs: the step-05 brief named "D-01", "D-14" and "D-10". The repo has no
 - "Sessions analyzed" counts `ok` sessions in scope only (`spec:249`).
 - The Benchmark drawer reports `n included` = `ok` sessions in the group window, and `n excluded` = `live` + `quarantined` sessions in the group window (`spec:332`).
 - How Land decides a session is `live`: **open (DQ-28)**.
-- Quarantine rules themselves are PROPOSED (DQ-2).
+- Quarantine rules Q-1…Q-8 are adopted by decision 0006 (Rey, 2026-11-10; PROPOSED until Rey sets ACCEPTED).
 
 **Not enough data.** Not applicable.
 
@@ -517,7 +517,7 @@ gpb = gmv_per_buyer (ALG-06)                      if paid_buyers ≥ 1
 - P75_CVR and the median come from the **grading group's current window**: the group the filters define (ALG-11, ALG-13).
 - The median's population includes the session itself (0004 item 2).
 - `cvr` is the 4-dp CVR (ALG-05).
-- PROPOSED (DQ-16).
+- PROPOSED (DQ-16; recorded in decision 0007 for Rey to confirm).
 
 **Inputs.** `entered_uv`, `cvr`, `gmv`, `paid_buyers`; the group's CVR P75 and median GMV per buyer.
 
@@ -553,25 +553,27 @@ Null sessions are left out of the sum, and their count is returned beside it ("n
 
 ### ALG-27 Annualised recoverable revenue
 
-**Definition.** The spec says the hover value "uses the annual GMV from the platform MCP" (`spec:261`, `spec:952`), but gives no formula. **No such input exists in this repo**: no MCP source is approved (DQ-5).
+**Definition** (decision 0007, PROPOSED until Rey sets ACCEPTED; DQ-17 option B, run-rate). The spec's "annual GMV from the platform MCP" (`spec:261`, `spec:952`) has no approved source (DQ-5), so v1 uses the selected range's own pace:
 
-Until DQ-17 is decided, the annualised value is **null**, and Serve says "not available".
+```
+days_in_range = (range_end − range_start) + 1     # after clamping range_end to as_of (ALG-38)
+annualised    = round2( aggregate_recoverable × 365 ÷ days_in_range )   if days_in_range ≥ 28
+```
 
-**Candidate formulas** (UNVERIFIED, for DQ-17):
-- A: `recoverable × annual_gmv ÷ period_gmv`
-- B: `recoverable × 365 ÷ days_in_range`
+**Label** (always shown with the value): "Run-rate: this period's pace × 365. Not seasonally adjusted." Text comes from a template (R39), not an LLM.
 
-**Inputs.** Annual GMV per brand × platform (missing).
+**Inputs.** Aggregate recoverable (ALG-26) and the time range (ALG-38).
 
-**Not enough data.** Always null today.
+**Not enough data → null.**
+- `days_in_range < 28` → null, `null_reason = range_too_short`; Serve shows "Range too short to annualise". Blocks Last 7 days, and This month before its 28th day. Last 30, Last 90, Last month and This quarter (from day 28) pass.
+- Aggregate recoverable is null → null.
 
-**Edge cases.** For candidate A, `period_gmv = 0` → null.
+**Edge cases.** Aggregate recoverable 0.00 → 0.00. A run-rate over a peak period overstates the year; this is accepted and stated in the label.
 
-**Example** (candidate formulas only, recoverable 4,325.00 over 30 days, period GMV 20,000.00, annual GMV 1,000,000.00):
-- A → **216,250.00**
-- B → **52,620.83**
-
-The two disagree by 4×, which is why DQ-17 needs a decision.
+**Example** (aggregate recoverable 4,325.00):
+- 30 days → 4,325.00 × 365 ÷ 30 = **52,620.83**
+- 28 days → 4,325.00 × 365 ÷ 28 = **56,379.46**
+- 27 days → **null** (range_too_short)
 
 ## 10. Type = All
 
@@ -843,7 +845,7 @@ PROPOSED (DQ-23): the tag's group and window are used, because tags "stay on the
 
 ## Stored or computed
 
-**Status: PROPOSED.** It answers DQ-1. Only Rey accepts.
+**Status: Rey chose option C on 2026-11-10; recorded as decision 0005 (PROPOSED until Rey sets ACCEPTED).** It answers DQ-1.
 
 **The question.** Benchmarks and tiers "follow the filters, recalculated live" (`spec:270`, `spec:294`). The spec also says "a daily job computes P25/P50/P75 per Brand × Platform × Type … Results are stored with their window dates" (`spec:953`), and 0004 item 1 recalculates the window daily.
 
@@ -899,8 +901,8 @@ Every item below is also in [decision-queue.md](decision-queue.md) as **PROPOSED
 | DQ-13 | CVR, AOV and exposure populations and minimums are not stated | CVR: entered ≥ 30 or > 0; AOV: orders ≥ 1 or ≥ 3; exposure: all | **CVR entered ≥ 30; AOV orders ≥ 1; exposure all `ok`** | Rey | ALG-15 |
 | DQ-14 | Percentile-rank formula for "Nth percentile" (`spec:325`) is undefined | a) midrank; b) `count(<v)/n`; c) `count(≤v)/n` | **a**: symmetric, and ties sit in the middle | Claude Code drafts, Rey approves | ALG-16 |
 | DQ-15 | Which day a session belongs to | a) start time UTC+8; b) end time; c) split | **a**: start time is what the UI shows (`spec:477`) | Rey | ALG-01, ALG-12, ALG-38 |
-| DQ-16 | Recoverable revenue: eligibility, CVR precision, median population | Eligibility: entered > 0 or ≥ 30; CVR: 4 dp or exact; median: grading group's current window incl. self, or own type | **entered > 0 (the spec sets no minimum); 4-dp CVR; median of the grading group's current window, self included, ≥ 20 buyers' sessions; null when Building** | Rey | ALG-25, ALG-26 |
-| DQ-17 | Annualised recoverable: no formula in the spec (`spec:261`), and no input exists | a) × annual GMV ÷ period GMV; b) × 365 ÷ days; c) drop | **Null until DQ-5**, then a or b by Rey | Rey | ALG-27 |
+| DQ-16 | Decided by Rey 2026-11-10 → decision 0007 | | | | ALG-25, ALG-26 |
+| DQ-17 | Decided by Rey 2026-11-10: option B, run-rate with a 28-day guard → decision 0007 | | | | ALG-27 |
 | DQ-18 | Weakest stage: second tie (same tier and same UV lost); no stage graded | Earlier stage, later stage, or "none" | **Earlier stage; null when nothing graded** | Rey | ALG-24 |
 | DQ-19 | Aggregate tiers have no stated minimum | a) stage minimums on pooled inputs; b) none | **a** | Rey | ALG-22, ALG-36 |
 | DQ-20 | The "no pooled All types group" fallback (`spec:276`, `spec:935`, `spec:654`) can't trigger with room-export data; 0004's "supersedes" note on it was Claude Code's wording | a) drop it; b) implement it anyway | **a** | Rey | ALG-28 |
