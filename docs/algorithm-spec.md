@@ -632,19 +632,38 @@ Both are correct; the view names the group.
 ### ALG-30 Leaderboard membership, rank and greying
 
 **Definition.**
-- **Membership.** PROPOSED (DQ-8, DQ-9): every host of the brand × platform (and of the Type filter's type) that has **any landed session**. Hosts with no `ok` session in the range are listed **last**, with "No lives in this range". This follows `spec:579` and `spec:936`, and the demo scenario at `spec:1087`, over R24's "hosts without sessions hidden" (`spec:1000`). The Hosts filter limits the rows (`spec:215`).
-- **Rank.** Total GMV descending. Ties → `host_id` ascending. PROPOSED (DQ-31). Hosts without lives come after all hosts with lives, ordered by `host_id`.
-- **Greying.** PROPOSED (DQ-10): a row is greyed "Not enough data" when the host has fewer than 3 `ok` sessions or fewer than 10 paid orders in the range. This reuses the tag eligibility of `spec:703`. Its funnel cells then show "n/a".
+- **Rows** (DQ-9, ACCEPTED by Rey 2026-11-10). A row is every host of the brand × platform (and of the Type filter's type) with **≥ 1 `ok` session in the selected range**. The Hosts filter limits the rows (`spec:215`). The **same host list** feeds the Hosts filter options and host comparison, so only hosts with lives in the range can be compared.
+- **No-lives row** (DQ-8 and DQ-9, ACCEPTED by Rey 2026-11-10). After the last ranked row, **one collapsed row**: "N hosts with no lives in this range" / "N 位主播在此时间范围内无直播".
+  - N counts the hosts with ≥ 1 `ok` session in the current window [as_of − 89, as_of] (ALG-12) and **none** in the selected range.
+  - The row is not shown when N = 0.
+  - This overrides R24's "hosts without sessions hidden" (`spec:1000`). It follows §7.2 (`spec:579`) and §12 (`spec:936`). Hosts are collapsed into one count rather than listed one by one.
+- **Rank.** Total GMV descending. Ties → `host_id` ascending. PROPOSED (DQ-31). The collapsed no-lives row has no rank.
+- **Greying** (DQ-10, ACCEPTED by Rey 2026-11-10). A row is greyed "Not enough data" when the host has **fewer than 3 `ok` sessions or fewer than 10 paid orders in the range** (the tag eligibility thresholds of `spec:703`).
+  - A greyed row still shows its values (ALG-29) with "Not enough data". It gets **no tiers**: tier cells show "n/a".
+  - The Host drawer for a greyed host does the same.
+  - Per-cell grading of stages ①–③ for greyed hosts is a Day 2 item (DQ-36, PROPOSED).
 
-**Not enough data.** As defined above.
+**Not enough data.** As defined under Greying.
 
 **Edge cases.**
-- Greyed hosts keep their rank (`spec:566`).
-- A host whose type does not match the Type filter is not listed.
+- Greyed hosts keep their rank (`spec:566`). With the default sort, Total GMV ↓ (`spec:569`), graded hosts usually lead.
+- A host whose type does not match the Type filter is not listed and is not counted in N.
+- A host whose sessions in the range are all `live` or `quarantined` has no `ok` session there, so it is not a row. It counts in N if it has an `ok` session in the window.
+- A range that ends before the window starts (e.g. a custom range last year): rows come from the range, and N still counts window hosts with no `ok` session in the range.
+- A host whose last `ok` session is older than the window is neither a row nor counted in N.
+- With a Hosts filter selection, N counts only the selected hosts.
 
-**Example.** H2 (GMV 4,700.00, 3 sessions), H1 (4,700.00, 2), H3 (900.00, 1), H4 (no lives) → **#1 H1, #2 H2, #3 H3, #4 H4** ("No lives in this range").
+**Example.** `as_of` 2026-10-27, so the window is 2026-07-30 … 2026-10-27. Range = Last 30 days (2026-09-28 … 2026-10-27).
+- H2: GMV 4,700.00, 3 sessions, 12 orders.
+- H1: 4,700.00, 2 sessions, 16 orders.
+- H3: 900.00, 1 session, 2 orders.
+- H4: no session in the range, last `ok` session 2026-09-15 (inside the window).
+- H5: last `ok` session 2026-06-01 (outside the window).
+
+Result: **#1 H1, #2 H2, #3 H3**, then the collapsed row **"1 host with no lives in this range"** (H4). H5 does not appear.
 - H1 is ahead of H2 because their GMV ties and `host_id` H1 < H2.
-- H3 is greyed: 1 session.
+- H1 is greyed (2 sessions) and H3 is greyed (1 session, 2 orders): both show values with "Not enough data" and n/a tier cells.
+- H2 is graded.
 
 ## 12. Reach × AOV tags (influencers)
 
