@@ -45,8 +45,8 @@ The demo generator (`upstream/design-pack/generate_demo_data.py`) is **not** a s
 | Path | What |
 |---|---|
 | [docs/scope.md](docs/scope.md) | The four layers and what each owns |
-| [docs/requirements.md](docs/requirements.md) | Requirement list (spec section 15 + LAND-1, AC-1, AUTH-1) |
-| [docs/algorithm-spec.md](docs/algorithm-spec.md) | Scoring algorithm (template; filled in the next step) |
+| [docs/requirements.md](docs/requirements.md) | BE requirements (BE-01…BE-31) and coverage of spec R1–R45 |
+| [docs/algorithm-spec.md](docs/algorithm-spec.md) | Scoring algorithm, ALG-01…ALG-39 (draft until Rey approves) |
 | [docs/data-model/](docs/data-model/) | Room export model, quarantine rules |
 | [docs/decisions/](docs/decisions/) | Decision records |
 | [docs/decision-queue.md](docs/decision-queue.md) | Open decisions with owners |
