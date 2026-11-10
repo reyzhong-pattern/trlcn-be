@@ -16,8 +16,8 @@
 
 | ID | Requirement | Priority | Trace | ALG | Verify |
 |---|---|---|---|---|---|
-| BE-01 | Land each room-export file named in the file log into **session records** (ALG-01 fields), with lineage to file and row. Re-landing the same file is a no-op. A newer export of the same session replaces the current version and the history is kept (DQ-29). | P0 (feeds every P0 view) | R8, `spec:951`, `spec:957`; decision 0002 (PROPOSED); 0003 | ALG-01 | Land |
-| BE-02 | Set `status` ∈ {ok, live, quarantined} and the quarantine reasons. Apply the quarantine rules Q-1…Q-8 ([quarantine-rules.md](data-model/quarantine-rules.md), PROPOSED, DQ-2). Live detection per DQ-28. | P0 | R35, R20, `spec:938-939`, `spec:249` | ALG-02 | Land |
+| BE-01 | Land each room-export file named in the file log into **session records** (ALG-01 fields), with lineage to file and row. Re-landing the same file is a no-op. A newer export of the same session replaces the current version and the history is kept (DQ-29). | P0 (feeds every P0 view) | R8, `spec:951`, `spec:957`; decision 0002 (Rey accepted 2026-11-10; status set in review); 0003 | ALG-01 | Land |
+| BE-02 | Set `status` ∈ {ok, live, quarantined} and the quarantine reasons. Apply the quarantine rules Q-1…Q-8 ([quarantine-rules.md](data-model/quarantine-rules.md), decision 0006). Live detection per DQ-28. | P0 | R35, R20, `spec:938-939`, `spec:249` | ALG-02 | Land |
 | BE-03 | Cross-check counts against Compass's ratio columns (曝光-观看率(人数), 观看成交率(人数), 商品点击成交率(人数)) and record mismatches as findings. Tolerance is TBD; findings do not quarantine unless Rey decides otherwise. | TBD (Rey) | [room-export.md](data-model/room-export.md) | ALG-03, ALG-04, ALG-05 | Land |
 | BE-04 | Record the **data-as-of date** and the last sync time per brand × platform (DQ-33). Serve exposes them (BE-16). | P0 | R4, R35 ("freshness"), `spec:942` | C4, ALG-12 | Land, Contract |
 
@@ -29,13 +29,13 @@
 | BE-06 | A daily job builds a **benchmark snapshot** for every (as_of, brand, platform, type_key ∈ {Self-operated, Influencer, All types}). Each holds window dates, n included / excluded / hosts, group status (ready / Building), and per metric: status, P25 / P50 / P75 and the population values (for the drawer histogram). Snapshots are kept and never overwritten. | P0 | R8, R9, R11, `spec:269-275`, `spec:953` | ALG-11…ALG-18 | Golden |
 | BE-07 | Grade at read time against the current snapshot: stage tier, session tier, aggregate tier, with Building / Not enough data and never WEAK for small samples. | P0 | R9, R10, R12, R17, R24, `spec:280-294` | ALG-19…ALG-23 | Golden |
 | BE-08 | Weakest stage for sessions and for aggregates. | P0 (R17); the Sessions filter is P1 (R18, R20) | R17, R18, R20, `spec:263` | ALG-24 | Golden |
-| BE-09 | Recoverable revenue per session and per selection, against the group the filters define. The annualised value is null until DQ-17. | P0 | R13, R16, `spec:261` | ALG-25…ALG-27 | Golden |
+| BE-09 | Recoverable revenue per session and per selection, against the group the filters define. The annualised value is a run-rate (× 365 ÷ days in range), null below 28 days (decision 0007). | P0 | R13, R16, `spec:261` | ALG-25…ALG-27 | Golden |
 | BE-10 | **Action Card numbers** per session and stage: rate, P50, P75, gap to P50 in pp, UV lost (est. refunds at ⑤), tier, severity label, and expected recovery at P50 and P75. The formula is open (DQ-4). Numbers come only from Score (AGENTS.md rule 9). | P0 | R22, `spec:519-523`; AC-1 | ALG-09, ALG-20, ALG-25; DQ-4 | Golden |
 | BE-11 | Host pooled metrics, leaderboard membership, rank and greying. | P0 | R24, R27, R28, `spec:566-579` | ALG-29, ALG-30 | Golden |
 | BE-12 | Daily Reach × AOV tags for influencers: eligibility, borderline, 2-recalculation hysteresis, change marker, CVR tier, and an append-only **tag history**. | P0 (R25); map P1 (R26) | R25, R26, R27, `spec:661-729` | ALG-31…ALG-37 | Golden |
 | BE-13 | Time ranges, time gates, previous period, MoM, YoY and change values. | P0 | R14, R12, R13, `spec:369-374`, `spec:195-196` | ALG-38, ALG-39 | Golden |
 | BE-14 | Provisional retention: mark stage ⑤ provisional until refunds mature, and exclude immature sessions from the ⑤ benchmark. Blocked on DQ-3 and DQ-27; the window per platform is unknown (G3). | P1 | R36, `spec:1182` | ALG-04 (⑤), ALG-15 | Golden (after DQ-3) |
-| BE-15 | A past grade can be reproduced from stored session versions and the snapshot for its `as_of` (stored-or-computed option C, PROPOSED, DQ-1). | P0 | R11, `spec:275` | ALG-13; "Stored or computed" | Golden |
+| BE-15 | A past grade can be reproduced from stored session versions and the snapshot for its `as_of` (stored-or-computed option C, decision 0005). | P0 | R11, `spec:275` | ALG-13; "Stored or computed" | Golden |
 
 ## Serve
 
