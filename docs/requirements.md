@@ -31,7 +31,7 @@
 | BE-08 | Weakest stage for sessions and for aggregates. | P0 (R17); the Sessions filter is P1 (R18, R20) | R17, R18, R20, `spec:263` | ALG-24 | Golden |
 | BE-09 | Recoverable revenue per session and per selection, against the group the filters define. The annualised value is a run-rate (× 365 ÷ days in range), null below 28 days (decision 0007). | P0 | R13, R16, `spec:261` | ALG-25…ALG-27 | Golden |
 | BE-10 | **Action Card numbers** per session and stage: rate, P50, P75, gap to P50 in pp, UV lost (est. refunds at ⑤), tier, severity label, and expected recovery at P50 and P75. The formula is open (DQ-4). Numbers come only from Score (AGENTS.md rule 9). | P0 | R22, `spec:519-523`; AC-1 | ALG-09, ALG-20, ALG-25; DQ-4 | Golden |
-| BE-11 | Host pooled metrics, leaderboard membership, rank and greying. | P0 | R24, R27, R28, `spec:566-579` | ALG-29, ALG-30 | Golden |
+| BE-11 | Host pooled metrics, leaderboard membership, rank and greying. Rows = hosts with ≥ 1 `ok` session in the range; one collapsed last row counts hosts with an `ok` session in [as_of − 89, as_of] but none in the range (DQ-8, DQ-9). The same host list serves the Hosts filter and host comparison. Greyed = < 3 `ok` sessions or < 10 paid orders in the range: values shown with "Not enough data", no tiers, "n/a" tier cells, also in the Host drawer (DQ-10). | P0 | R24 (overridden, see [Departures](#departures-from-the-spec)), R27, R28, `spec:566-579` | ALG-29, ALG-30 | Golden |
 | BE-12 | Daily Reach × AOV tags for influencers: eligibility, borderline, 2-recalculation hysteresis, change marker, CVR tier, and an append-only **tag history**. | P0 (R25); map P1 (R26) | R25, R26, R27, `spec:661-729` | ALG-31…ALG-37 | Golden |
 | BE-13 | Time ranges, time gates, previous period, MoM, YoY and change values. | P0 | R14, R12, R13, `spec:369-374`, `spec:195-196` | ALG-38, ALG-39 | Golden |
 | BE-14 | Provisional retention: mark stage ⑤ provisional until refunds mature, and exclude immature sessions from the ⑤ benchmark. Blocked on DQ-3 and DQ-27; the window per platform is unknown (G3). | P1 | R36, `spec:1182` | ALG-04 (⑤), ALG-15 | Golden (after DQ-3) |
@@ -50,7 +50,7 @@ Every endpoint takes the filter set (Brand, Platform, Type, Hosts, Time range) t
 | BE-20 | **Sessions list**: server-side search (date strings, host name, topic), sort on every sortable column, pagination (10 / 25 / 50 / 100), quick filters (tier, weakest stage). Live sessions are on top with no tier; quarantined sessions are labelled with their reason. | P0; quick filters P1 | R19, R20, `spec:461-497` | ALG-02, ALG-20, ALG-21, ALG-24, ALG-25 | Contract |
 | BE-21 | **Session drawer**: meta, scope row, KPI strip, prev / next, deep link by `session_id`; Summary (funnel and stage performance); Action Cards with BE-10 numbers and text that **cites play IDs**. LLM-written text may explain the numbers but never computes them (AC-1). The play reference set is not designed yet. | P0 | R21, R22, `spec:499-531`; AC-1 | ALG-20…ALG-25 | Contract, UAT |
 | BE-22 | **Benchmark drawer data** for any group and metric: value, tier and percentile rank when opened from a value; the population values for the histogram; group, window, n included / excluded / hosts; stage minimum; all metrics' P25 / P50 / P75; Building state. | P0 | R11, `spec:296-361` | ALG-14…ALG-18 | Contract, Golden |
-| BE-23 | **Hosts**: leaderboard (ALG-29 columns, tiered funnel cells, rank, greying, "No lives in this range"), influencer map points (P1), host drawer (KPIs vs P50, tag with reason values, funnel, GMV / CVR per gate, sessions), host comparison for 2–4 `host_id`s on one platform. | P0; map P1 | R24–R28, `spec:533-659` | ALG-29…ALG-36, ALG-38 | Contract, Golden |
+| BE-23 | **Hosts**: leaderboard (ALG-29 columns, tiered funnel cells for graded hosts, rank, greyed rows with values, "Not enough data" and "n/a" tier cells, default sort GMV ↓, and the collapsed "N hosts with no lives in this range" row with N), influencer map points (P1), host drawer (KPIs vs P50, tag with reason values, funnel, GMV / CVR per gate, sessions; no tiers for a greyed host), host comparison for 2–4 `host_id`s with ≥ 1 `ok` session in the range on one platform (DQ-8, DQ-9, DQ-10). | P0; map P1 | R24–R28, `spec:533-659` | ALG-29…ALG-36, ALG-38 | Contract, Golden |
 | BE-24 | **Comparison facts**: return the numbers behind the "largest difference" sentences for channel and host comparison. The rule is ALG-41 (decision 0009, PROPOSED); the text is rendered from per-language templates (R39), not by an LLM. | P1 (R15) / P0 (R28) | R15, R28, R39, `spec:430`, `spec:653` | ALG-10, ALG-29, ALG-41 | Contract, Golden |
 | BE-25 | **States** (§12): every response distinguishes no brand access, no access to this brand, platform not connected, no sessions in scope, Building, Not enough data, live, quarantined, and error, so FE never infers a state from missing fields. | P0 | R35, `spec:924-945` | ALG-02, ALG-17, ALG-23 | Contract |
 | BE-26 | **Settings**: users and access (list, invite, edit, deactivate, bulk brand assignment, guardrails: no self-demotion or self-deactivation, at least one active Admin); data connections and benchmark rules (read-only). | P0 (R29); P1 (R31) | R29, R31, `spec:731-771` | — | Contract, DB |
@@ -97,7 +97,7 @@ Every R-ID in spec section 15 (`spec:976-1021`). There is no **R23** in the spec
 | R21 | Session drawer | both | BE-21 |
 | R22 | Action Cards | both | BE-10, BE-21 |
 | R23 | *(not in the spec)* | — | — |
-| R24 | Host leaderboard | both | BE-07, BE-11, BE-23 (DQ-8: R24 vs §7.2) |
+| R24 | Host leaderboard | both | BE-07, BE-11, BE-23 (R24's "hosts without sessions hidden" is overridden by DQ-8; see [Departures](#departures-from-the-spec)) |
 | R25 | Reach × AOV tags | both | BE-12, BE-23 |
 | R26 | Influencer map | both | BE-12, BE-23 |
 | R27 | Host drawer | both | BE-11, BE-12, BE-23 |
@@ -119,3 +119,11 @@ Every R-ID in spec section 15 (`spec:976-1021`). There is no **R23** in the spec
 | R43 | One Comparison panel component | FE-only | — (data is in BE-18, BE-23, BE-24) |
 | R44 | Tooltips | FE-only | — (values are in BE-19, BE-22, BE-23) |
 | R45 | Drawers, motion | FE-only | — |
+
+## Departures from the spec
+
+Where an ACCEPTED decision overrides the spec.
+
+| Spec | Spec says | Now | Decision |
+|---|---|---|---|
+| R24 (`spec:1000`) | "hosts without sessions hidden" | Hosts with no lives in the range are one collapsed last row, "N hosts with no lives in this range" / "N 位主播在此时间范围内无直播" (follows §7.2 `spec:579`, §12 `spec:936`) | DQ-8 (ACCEPTED, Rey, 2026-11-10) |

@@ -632,9 +632,9 @@ Both are correct; the view names the group.
 ### ALG-30 Leaderboard membership, rank and greying
 
 **Definition.**
-- **Membership.** PROPOSED (DQ-8, DQ-9): every host of the brand × platform (and of the Type filter's type) that has **any landed session**. Hosts with no `ok` session in the range are listed **last**, with "No lives in this range". This follows `spec:579` and `spec:936`, and the demo scenario at `spec:1087`, over R24's "hosts without sessions hidden" (`spec:1000`). The Hosts filter limits the rows (`spec:215`).
-- **Rank.** Total GMV descending. Ties → `host_id` ascending. PROPOSED (DQ-31). Hosts without lives come after all hosts with lives, ordered by `host_id`.
-- **Greying.** PROPOSED (DQ-10): a row is greyed "Not enough data" when the host has fewer than 3 `ok` sessions or fewer than 10 paid orders in the range. This reuses the tag eligibility of `spec:703`. Its funnel cells then show "n/a".
+- **Membership.** (DQ-9, ACCEPTED) Rows = hosts of the brand × platform (and of the Type filter's type) with ≥ 1 `ok` session in the range. The Hosts filter limits the rows (`spec:215`). The same list feeds the Hosts filter options and host comparison. (DQ-8, ACCEPTED) Hosts with no lives in the range are shown as **one collapsed last row**, "N hosts with no lives in this range" / "N 位主播在此时间范围内无直播", where N = hosts with ≥ 1 `ok` session in [as_of − 89, as_of] and none in the range. This overrides R24's "hosts without sessions hidden" (`spec:1000`) and follows `spec:579` and `spec:936`.
+- **Rank.** Total GMV descending. Ties → `host_id` ascending. PROPOSED (DQ-31). The collapsed no-lives row has no rank.
+- **Greying.** (DQ-10, ACCEPTED) A row is greyed when the host has fewer than 3 `ok` sessions or fewer than 10 paid orders in the range. A greyed row shows its values with "Not enough data" and gets no tiers: its tier cells show "n/a". The Host drawer for a greyed host does the same. Default sort: GMV ↓.
 
 **Not enough data.** As defined above.
 
@@ -642,9 +642,9 @@ Both are correct; the view names the group.
 - Greyed hosts keep their rank (`spec:566`).
 - A host whose type does not match the Type filter is not listed.
 
-**Example.** H2 (GMV 4,700.00, 3 sessions), H1 (4,700.00, 2), H3 (900.00, 1), H4 (no lives) → **#1 H1, #2 H2, #3 H3, #4 H4** ("No lives in this range").
+**Example.** H2 (GMV 4,700.00, 3 sessions), H1 (4,700.00, 2), H3 (900.00, 1), H4 (no lives in the range; an `ok` session in [as_of − 89, as_of]) → **#1 H1, #2 H2, #3 H3**, then the collapsed row "1 host with no lives in this range" (no rank).
 - H1 is ahead of H2 because their GMV ties and `host_id` H1 < H2.
-- H3 is greyed: 1 session.
+- H1 and H3 are greyed (fewer than 3 sessions): values shown with "Not enough data", tier cells "n/a".
 
 ## 12. Reach × AOV tags (influencers)
 
