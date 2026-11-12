@@ -62,8 +62,8 @@ The spec also refers to `demo-data/` (`upstream/design-pack/03-product-spec-v0.4
 | Field | Value |
 |---|---|
 | What | claude.ai Design artifact (hi-fi mockup) |
-| URL | https://claude.ai/artifact/KrA5rxAQxzQhpCdtjwfyHU |
-| Version | `1794210096-60c6` |
+| URL | https://claude.ai/artifact/Y6meVMkfzS7bB1NL7mszHB |
+| Version | `1794283411-4173` |
 | Status | **Reference only.** It cannot be pinned or vendored; its content can change. Not copied into this repo. |
 
 Decision [0004](../docs/decisions/0004-hifi-wins-and-resolved-rules.md) says the hi-fi wins over the spec and older methods where they conflict, and the mockup's behaviour wins where the spec is silent. Any claim about the mockup's behaviour names the version above, or is marked UNVERIFIED.
