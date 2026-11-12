@@ -12,7 +12,7 @@
 |---|---|
 | `spec:N` | `upstream/design-pack/03-product-spec-v0.4.md` line N |
 | `gen:N` | `upstream/design-pack/generate_demo_data.py` line N |
-| `0001` … `0007` | `docs/decisions/0001-algorithm-follows-spec-v0.4.md`, `0002-v1-landing-room-export-only.md`, `0003-entered-uv-definition.md`, `0004-hifi-wins-and-resolved-rules.md`, `0005-benchmark-snapshots-read-time-grading.md`, `0006-adopt-quarantine-rules.md`, `0007-recoverable-revenue-run-rate.md` |
+| `0001` … `0011` | `docs/decisions/0001-algorithm-follows-spec-v0.4.md`, `0002-v1-landing-room-export-only.md`, `0003-entered-uv-definition.md`, `0004-hifi-wins-and-resolved-rules.md`, `0005-benchmark-snapshots-read-time-grading.md`, `0006-adopt-quarantine-rules.md`, `0007-recoverable-revenue-run-rate.md`, `0008-action-card-expected-recovery.md`, `0009-comparison-difference-sentences.md`, `0010-host-analysis-data.md`, `0011-time-bases-t-minus-1.md` |
 | `DQ-n` | an item in [decision-queue.md](decision-queue.md) |
 
 Decision IDs: the step-05 brief named "D-01", "D-14" and "D-10". The repo has no such files. D-01 = **0001**, D-14 = **0003**. "Fetch is out of scope" (D-10) is not a decision record; it is `AGENTS.md` rule 7 and [scope.md](scope.md).
@@ -22,7 +22,8 @@ Decision IDs: the step-05 brief named "D-01", "D-14" and "D-10". The repo has no
 - **C1. Exact arithmetic.** Ratios are computed exactly (rational or arbitrary-precision decimal), never in binary floating point, and then rounded once (ALG-03). Comparisons (`≥`, `<`, `≤ 0.10`) are made on the rounded decimal values. Reason: float64 gives `330/300 − 1 = 0.10000000000000009`, which would wrongly fail an inclusive `≤ 0.10` test (ALG-33 example).
 - **C2. Time zone.** All dates are calendar days in UTC+8 (China Standard Time), the spec's display zone (`spec:1033`).
 - **C3. Null.** "null" means "no value". A null is never treated as 0, never enters a percentile, and never produces a tier.
-- **C4. The data-as-of date** `as_of` is the latest UTC+8 calendar day for which landed data is complete (glossary). How Land sets it: DQ-33.
+- **C4. The data-as-of date** `as_of` is **yesterday**, the UTC+8 calendar day before today: data is T-1 (Rey 2026-11-12; decision 0011, PROPOSED until Rey accepts). Every time range ends on `as_of` (ALG-38). What happens when yesterday's files have not landed: DQ-33.
+- **C6. Two time bases.** The **benchmark** [as_of − 89, as_of] (ALG-12) gives every tier (STAR / GOOD / MID / WEAK) and the Action Card P50 / P75, and nothing else. Everything else uses the **selected time range**, including all of Host Analysis and the Reach × AOV tag thresholds (decisions 0010, 0011).
 - **C5. Scope vs group.** The *scope* is everything the filters select (Brand, Platform, Type, Hosts, Time range; `spec:191-195`). The *benchmark group* is only Brand × Platform × Type (`spec:193`). The Hosts filter and the time range never change the group or its percentiles.
 
 ---
@@ -263,7 +264,7 @@ The room-export column is UNVERIFIED, and so is the assumption that it is per en
 
 **Edge cases.**
 - A session that crosses midnight belongs to its start day (DQ-15).
-- Sessions with `session_day > as_of` cannot exist, because `as_of` is the last complete day.
+- Sessions with `session_day > as_of` (today's) are in no window and no range until `as_of` moves (T-1, C4).
 - Window length 90 and minimum 20 are spec assumption A3 (`spec:1031`); spec Q4 (`spec:1038`) is still open. Confirm: DQ-35.
 
 **Example** (`as_of` = 2026-10-27, window 2026-07-30 … 2026-10-27, 90 days):
@@ -286,7 +287,9 @@ The room-export column is UNVERIFIED, and so is the assumption that it is per en
 
 **Not enough data.** As in ALG-17 and ALG-18.
 
-**Edge cases.** Previous-period and YoY values (ALG-39) are shown as rates and changes only, never tiered, so no historical window is needed for them.
+**Edge cases.**
+- Previous-period and YoY values (ALG-39) are shown as rates and changes only, never tiered, so no historical window is needed for them.
+- The benchmark is used only for tiers and the Action Card P50 / P75 (C6). The Reach × AOV tag thresholds are not benchmark values (ALG-31).
 
 **Example.** With `as_of` = 2026-10-27, a session from 2026-03-02 viewed today is graded against 2026-07-30 … 2026-10-27, not against a window ending 2026-03-01.
 
@@ -458,7 +461,7 @@ v ≥ P75 → STAR    v ≥ P50 → GOOD    v ≥ P25 → MID    otherwise → W
 
 ### ALG-22 Aggregate tier
 
-**Definition.** `aggregate_tier = tier(pooled rate of the selection (ALG-10), the group's session-level P25/P50/P75)` (`spec:292`). It is used for KPI cards, Live Funnel rows, host funnel cells and the host CVR tier.
+**Definition.** `aggregate_tier = tier(pooled rate of the selection (ALG-10), the group's session-level P25/P50/P75)` (`spec:292`). It is used for KPI cards, Live Funnel rows, the funnel cells of **graded** leaderboard rows (greyed rows get none, ALG-30) and the host CVR tier.
 
 **Not enough data.** PROPOSED (DQ-19): the stage minimums are applied to the **pooled** inputs: Σ UV into the stage ≥ 30 (①–④, and CVR on Σ entered), Σ paid buyers ≥ 3 (⑤). The group must be ready and the metric ready.
 
@@ -616,12 +619,12 @@ Both are correct; the view names the group.
 | Paid orders | Σ paid_orders |
 | Best session GMV | max gmv |
 
-- Funnel cells are tiered with ALG-22 against the group the filters define (`spec:557`, `spec:573`).
+- Funnel cells of **graded** rows are tiered with ALG-22 against the group the filters define (`spec:557`, `spec:573`). Greyed rows (ALG-30, DQ-10) return their rates with tier null.
 - The CVR column has no tier (`spec:571`).
 
-**Not enough data.** Per cell, ALG-22. Row greying: ALG-30.
+**Not enough data.** For a graded row, per cell: ALG-22. A greyed row (ALG-30) gets no tiers at all. Per-cell grading of ①–③ for greyed rows is Day 2 (DQ-36).
 
-**Edge cases.** A host with no `ok` sessions in range: counts are 0, rates null, "No lives in this range" (ALG-30).
+**Edge cases.** A host with no `ok` session in the range is not listed, so it has no metrics here, no Host drawer entry from the leaderboard and no map point (ALG-30, ALG-31).
 
 **Example.** Host H1 = S-A + S-B:
 - Sessions 2, GMV **4,700.00**, Avg GMV / session **2,350.00**, AOV **293.75**, CVR **0.0350**.
@@ -631,56 +634,77 @@ Both are correct; the view names the group.
 
 ### ALG-30 Leaderboard membership, rank and greying
 
-**Definition.**
-- **Membership.** PROPOSED (DQ-8, DQ-9): every host of the brand × platform (and of the Type filter's type) that has **any landed session**. Hosts with no `ok` session in the range are listed **last**, with "No lives in this range". This follows `spec:579` and `spec:936`, and the demo scenario at `spec:1087`, over R24's "hosts without sessions hidden" (`spec:1000`). The Hosts filter limits the rows (`spec:215`).
-- **Rank.** Total GMV descending. Ties → `host_id` ascending. PROPOSED (DQ-31). Hosts without lives come after all hosts with lives, ordered by `host_id`.
-- **Greying.** PROPOSED (DQ-10): a row is greyed "Not enough data" when the host has fewer than 3 `ok` sessions or fewer than 10 paid orders in the range. This reuses the tag eligibility of `spec:703`. Its funnel cells then show "n/a".
+Decision 0010 (PROPOSED until Rey accepts). Everything here uses the **selected time range** only.
 
-**Not enough data.** As defined above.
+**Definition.**
+- **Which hosts appear** (DQ-9, DQ-8, Rey 2026-11-12). Every host of the brand × platform (and of the Type filter's type) with **≥ 1 `ok` session in the range**. A host with none is not listed: R24 "hosts without sessions hidden" (`spec:1000`) applies, not §7.2 / §12 (`spec:579`, `spec:936`). The Hosts filter limits the rows (`spec:215`).
+- **Rank.** Range Total GMV descending; ties → `host_id` ascending (PROPOSED, DQ-31). Every listed host has a rank, greyed hosts included (`spec:566`).
+- **Greying** (DQ-10, Rey 2026-11-10, revised 2026-11-12). A host is greyed when it has **fewer than 3 `ok` sessions or fewer than 10 paid orders in the range** (the thresholds of `spec:703`). A greyed host:
+  - returns its values (ALG-29) with **no tiers** (tier null), on the leaderboard and in the Host drawer;
+  - has the tag "Not enough data" if it is an influencer (ALG-32), the same value as its map point.
+  - Per-cell grading of ①–③ for greyed hosts is Day 2 (DQ-36, PROPOSED).
+- **Hosts filter** (BE-17). It lists the same hosts, each with its number of `ok` sessions in the range.
+- **Host comparison.** Only listed hosts can be compared.
+
+**Not enough data.** As defined under Greying.
 
 **Edge cases.**
 - Greyed hosts keep their rank (`spec:566`).
 - A host whose type does not match the Type filter is not listed.
+- A host whose sessions in the range are all `live` or `quarantined` has no `ok` session there and is not listed.
 
-**Example.** H2 (GMV 4,700.00, 3 sessions), H1 (4,700.00, 2), H3 (900.00, 1), H4 (no lives) → **#1 H1, #2 H2, #3 H3, #4 H4** ("No lives in this range").
+**Example.** `as_of` 2026-10-27; range = Last 30 days (2026-09-28 … 2026-10-27).
+- H2: GMV 4,700.00, 3 sessions, 12 orders.
+- H1: 4,700.00, 2 sessions, 16 orders.
+- H3: 900.00, 1 session, 2 orders.
+- H4: no `ok` session in the range (its last one is 2026-09-15).
+
+Result: **#1 H1, #2 H2, #3 H3**. H4 is not listed and is not in the Hosts filter.
 - H1 is ahead of H2 because their GMV ties and `host_id` H1 < H2.
-- H3 is greyed: 1 session.
+- H1 (2 sessions) and H3 (1 session) are greyed: tiers null, tag "Not enough data". H2 is graded.
+- Hosts filter: H1 (2), H2 (3), H3 (1).
 
 ## 12. Reach × AOV tags (influencers)
 
 ### ALG-31 Tag inputs and thresholds
 
-**Definition** (`spec:676-683`, `spec:712-726`):
-- **Window:** always the group's **current 90-day window**, never the time range. Redrawing the map for the selected range is spec Q7 (`spec:1041`), out of v1 (DQ-34).
-- **Group:** Brand × Platform × **Influencer**, whatever the Type filter (`spec:557`).
-- **Host inputs:**
+Decision 0010 (DQ-34, Rey 2026-11-12; PROPOSED until Rey accepts). The tag uses the **selected time range**, not the benchmark window, and is recomputed for whatever range is selected. This departs from `spec:680-683` ([requirements.md › Departures](requirements.md#departures-from-the-spec)).
+
+**Definition:**
+- **Window:** the selected time range (ALG-38).
+- **Group:** Brand × Platform × **Influencer**, whatever the Type filter (`spec:557`). The Hosts filter does not change it (C5).
+- **Host inputs**, over the host's `ok` sessions in the range:
   - `exposure_per_session = round2(Σ exposed ÷ sessions)`
   - `pooled_aov = round2(Σ gmv ÷ Σ paid_orders)`
-  - Both computed over the host's `ok` sessions in that window.
-- **Thresholds:** the Influencer group's P50 of exposure per session and P50 of AOV (ALG-15).
+- **Thresholds (the quadrant lines):** the **P50 of exposure per session** and the **P50 of AOV** over the Influencer group's `ok` **sessions in the range** (Rey, "Q2 = b"). Method ALG-14, populations ALG-15. These are not benchmark values (C6).
 - Self-operated hosts get no tag ("Not tagged", `spec:726`).
+- **One value, two places.** The leaderboard tag and the influencer map colour are the same value.
+
+**Influencer map** (answers spec Q7, `spec:1041`; sketch `spec:540-549`).
+- **Points:** one per influencer listed on the leaderboard (≥ 1 `ok` session in the range, ALG-30). No point otherwise.
+- **Position:** the host inputs above. **Lines:** the thresholds above.
+- Each point returns its tag and borderline (ALG-32, ALG-33).
+- How a point looks (colour, hollow, ring, size, tooltip, click): FE, per hi-fi.
 
 **Not enough data.** See ALG-32.
 
-**Edge cases.** A host can have a tag and still show no lives in the selected range, because the tag window ≠ the range.
+**Edge cases.** The same host can have different tags at Last 7 days and Last 30 days, because its values and the range P50s both change. This is by design. Rey: in the sandbox (option "b. P50 of range sessions"), host A at 30 days shows Premium Niche (UNVERIFIED: the sandbox is not in this repo).
 
-**Example.** Group P50 exposure per session **20,000.00**, P50 AOV **300.00**. Host X has 5 sessions, 40 orders, exposure / session 25,000.00 and AOV 280.00.
+**Example.** Range P50 exposure per session **20,000.00**, range P50 AOV **300.00**. In the range, Host X has 5 sessions, 40 orders, exposure / session 25,000.00 and AOV 280.00 → eligible (ALG-32), **Traffic Engine** (ALG-33).
 
 ### ALG-32 Tag eligibility
 
-**Definition.** The first match wins (`spec:703-704`, `spec:717-718`):
+**Definition.** The first match wins (`spec:703-704`, `spec:717-718`). Everything is counted in the **range** (ALG-31).
 1. Self-operated → "Not tagged".
-2. Influencer group Building → "Benchmark building".
-3. Host has fewer than 3 `ok` sessions or fewer than 10 paid orders in the window → "Not enough data".
+2. The range thresholds are not available → "Benchmark building". When that is: PROPOSED (DQ-38): fewer than 20 `ok` Influencer-group sessions in the range.
+3. Host has fewer than 3 `ok` sessions or fewer than 10 paid orders in the range → "Not enough data". This is the leaderboard greying rule (ALG-30), so a greyed influencer always shows "Not enough data".
 4. Otherwise → a quadrant (ALG-33).
-
-The exposure and AOV metrics must also be ready (ALG-18). If either is not, the host is "Not enough data". PROPOSED (DQ-12).
 
 **Not enough data.** As defined above.
 
 **Edge cases.** Exactly 3 sessions and 10 orders is eligible.
 
-**Example.**
+**Example** (all in the range):
 - Z: 2 sessions, 15 orders → **Not enough data**.
 - V: 3 sessions, 9 orders → **Not enough data**.
 - X: 5 sessions, 40 orders → eligible.
@@ -696,15 +720,17 @@ hi_aov   = pooled_aov           ≥ P50_aov
 borderline = |exposure_per_session ÷ P50_exposure − 1| ≤ 0.10  or  |pooled_aov ÷ P50_aov − 1| ≤ 0.10
 ```
 
+- The P50s are the range thresholds (ALG-31).
 - The borderline ratios are computed exactly (C1) and are **not** rounded before comparing.
 - Ties at P50 go high.
 - ±10% is inclusive.
+- The quadrant is the tag. There is no hysteresis (DQ-34; ALG-34 removed).
 
 **Not enough data.** ALG-32.
 
 **Edge cases.** A P50 of 0 would divide by zero. AOV P50 cannot be 0, because its population has ≥ 1 order. Exposure P50 of 0 → borderline false. This is UNVERIFIED as reachable.
 
-**Example** (P50s 20,000.00 / 300.00):
+**Example** (range P50s 20,000.00 / 300.00):
 
 | Host | exposure / session | AOV | Quadrant | Borderline |
 |---|---|---|---|---|
@@ -714,88 +740,36 @@ borderline = |exposure_per_session ÷ P50_exposure − 1| ≤ 0.10  or  |pooled_
 
 For W, float64 gives `330/300 − 1 = 0.10000000000000009`, which would wrongly fail the test (C1).
 
-### ALG-34 Hysteresis (2 consecutive recalculations)
+### ALG-34 Removed: hysteresis
 
-**Definition.** Each daily recalculation `d` computes `computed[d]` (ALG-32/33). The **official** tag follows these rules (`spec:706`, `spec:725`). Details are PROPOSED (DQ-21).
-- **First recalculation** for a host, or when the previous official value is a status ("Not tagged", "Benchmark building", "Not enough data"): `official[d] = computed[d]`.
-- **Status values apply at once.** When `computed[d]` is a status, `official[d] = computed[d]`. The pseudocode assigns these before `apply_hysteresis` (`spec:717-718`).
-- **Quadrant change.** When `computed[d]` is a quadrant ≠ `official[d−1]`, the official tag changes only if `computed[d] = computed[d−1]`. Otherwise `official[d] = official[d−1]`.
-- "Consecutive" means consecutive recalculations that ran, not calendar days. A missed day does not reset the count.
+Removed by Rey on 2026-11-12 (DQ-34, decision 0010). The tag is recomputed for the selected range each time, with no hysteresis. This departs from `spec:706` and `spec:725`. The ID is kept so that references stay stable.
 
-**Inputs.** The stored history (ALG-37).
+### ALG-35 Removed: change marker
 
-**Not enough data.** ALG-32.
-
-**Edge cases.** Borderline is recomputed daily from the current inputs and does not wait for hysteresis.
-
-**Example.**
-
-| Day | computed | official |
-|---|---|---|
-| 1 | Flagship | **Flagship** (first) |
-| 2 | Traffic Engine | Flagship |
-| 3 | Flagship | Flagship |
-| 4 | Traffic Engine | Flagship |
-| 5 | Traffic Engine | **Traffic Engine** (held 2 recalculations) |
-| 6 | Traffic Engine | Traffic Engine |
-
-### ALG-35 Change marker
-
-**Definition.** Shown when the official tag changed from one quadrant to another quadrant on a day `c` with `c ≥ as_of − 29`, i.e. within the 30 days ending on `as_of` (`spec:699`). It names the previous official quadrant ("from Premium Niche").
-- The spec's example "↑" has no defined direction. PROPOSED (DQ-22): no arrow, only "from {tag}", until UX defines an order.
-- Changes to or from a status do not create a marker.
-
-**Inputs.** The tag history (ALG-37).
-
-**Not enough data.** None.
-
-**Edge cases.** Several changes within 30 days → the most recent one is shown.
-
-**Example.** A change on 2026-09-28: with `as_of` 2026-10-27 the marker is **shown**; with `as_of` 2026-10-28 it is **not shown**.
+Removed by Rey on 2026-11-12 (DQ-34, decision 0010). There is no change marker. This departs from `spec:699`. The ID is kept so that references stay stable.
 
 ### ALG-36 Host CVR tier (secondary signal)
 
-**Definition.** `cvr_tier = tier(host pooled CVR over the tag window, the Influencer group's CVR P25/P50/P75)`. It is the small Tag beside the quadrant tag (`spec:698`).
+**Definition.** `cvr_tier = tier(host pooled CVR over the range, the Influencer group's benchmark CVR P25/P50/P75)`. It is the small Tag beside the quadrant tag (`spec:698`).
+- The host value uses the range, like the tag (ALG-31). The P25/P50/P75 come from the benchmark, like every tier (C6).
+- PROPOSED (DQ-23): the Influencer group, because tags "stay on the influencer group" (`spec:557`). The ALG-22 pooled minimum applies: Σ entered ≥ 30.
 
-PROPOSED (DQ-23): the tag's group and window are used, because tags "stay on the influencer group" (`spec:557`). The ALG-22 pooled minimum applies: Σ entered ≥ 30.
-
-**Not enough data.** The group is Building, or CVR is not ready, or Σ entered < 30. Hosts that are "Not enough data" for the tag show no CVR tier.
+**Not enough data.** The Influencer group is Building, or CVR is not ready, or Σ entered < 30. Hosts that are "Not enough data" for the tag (greyed, ALG-30) show no CVR tier.
 
 **Edge cases.** Only influencers get a CVR tier.
 
-**Example.** Pooled CVR 0.0350 against 0.0050 / 0.0100 / 0.0200 → **CVR STAR** ("Traffic Engine · CVR STAR").
+**Example.** Range pooled CVR 0.0350 against benchmark 0.0050 / 0.0100 / 0.0200 → **CVR STAR** ("Traffic Engine · CVR STAR").
 
-### ALG-37 Tag history (what must be stored)
+### ALG-37 Removed: tag history
 
-**Definition.** One row per influencer host per recalculation. It is needed for hysteresis (ALG-34), the change marker (ALG-35) and auditability (`spec:955`).
-
-| Field | Example |
-|---|---|
-| `as_of` | 2026-10-27 |
-| `window_from`, `window_to` | 2026-07-30, 2026-10-27 |
-| `brand`, `platform`, `host_id` | Thorne, douyin, H-X |
-| `group_status`, `group_n` | ready, 91 |
-| `sessions`, `paid_orders` | 5, 40 |
-| `exposure_per_session`, `pooled_aov`, `pooled_cvr` | 25000.00, 280.00, 0.0350 |
-| `p50_exposure`, `p50_aov` | 20000.00, 300.00 |
-| `computed` | Traffic Engine |
-| `official` | Traffic Engine |
-| `borderline` | true |
-| `cvr_tier` | STAR |
-| `changed_from` (null unless official changed this day) | Flagship |
-
-**Not enough data.** Rows are stored for status values too.
-
-**Edge cases.** The history is append-only; a recalculation is never edited. A re-run for the same `as_of` replaces that day's row (idempotent).
-
-**Example.** The row above records the day-5 change in the ALG-34 table.
+Removed by Rey on 2026-11-12 (DQ-34, decision 0010). Tags are computed at read time for the selected range, so nothing about tags is stored. The ID is kept so that references stay stable.
 
 ## 13. Time
 
 ### ALG-38 Time range and time gates
 
 **Definition.**
-- **Anchor.** Presets end on `as_of`, not on the calendar today (PROPOSED, DQ-24) (`spec:195`):
+- **Anchor.** Every preset ends on `as_of`, i.e. yesterday (T-1, C4), never on today (`spec:195`; Rey 2026-11-12, DQ-24; decision 0011, PROPOSED until Rey accepts). "Last 7 days" = the 7 days ending yesterday.
 
 | Preset | Range |
 |---|---|
@@ -815,7 +789,7 @@ PROPOSED (DQ-23): the tag's group and window are used, because tags "stay on the
 
 **Edge cases.** A custom end after `as_of` is clamped to `as_of`.
 
-**Example** (`as_of` 2026-10-27, a Tuesday):
+**Example** (today 2026-10-28, so `as_of` 2026-10-27, a Tuesday):
 - Last 30 days = **2026-09-28 … 2026-10-27**. This month = 2026-10-01 … 2026-10-27. Last month = 2026-09-01 … 2026-09-30.
 - Last 7 day gates = 2026-10-21 … 2026-10-27.
 - Last 7 week gates start on Mondays 2026-09-14, 09-21, 09-28, 10-05, 10-12, 10-19, **10-26** (partial, to 10-27).
@@ -908,7 +882,7 @@ Zero-buyer session (exposed 3,000, entered 200, product-exposed 150, clicked 40,
 
 **Not enough data.**
 - A series' rate counts only when its pooled input meets the ALG-22 minimum.
-- A host greyed "Not enough data" (ALG-30) gives no values (`spec:618`, `spec:944`).
+- A compared host with < 3 `ok` sessions or < 10 paid orders in the range (the DQ-10 thresholds, applied to the comparison's own range) is flagged "Not enough data" and gives no facts (`spec:618`, `spec:944`).
 
 **Edge cases.**
 - Every value is "higher is better", so no metric needs inverting.
@@ -947,10 +921,9 @@ Kept facts: GMV/session LisaWang 10.64 → **11×** (11–13×); AOV LisaWang **
 |---|---|---|---|---|
 | A. Daily job stores everything | Nightly: benchmark snapshot per group, plus a tier for every session × group (3 per session) | Yes: all 3 groups are pre-graded | Yes, if every day's tiers are kept | Writes every session × 3 groups every day, because tiers change as the window moves (ALG-13). Aggregate tiers of arbitrary selections (Hosts × Time range) still can't be precomputed, so it becomes a hybrid anyway |
 | B. All at read time | Percentiles computed from session records per request | Yes | Only by re-running with the old `as_of` and the data as it was then; re-landed data (DQ-29) breaks this | Percentiles over 90 days × group on every request; no stored "as of" for the drawer (`spec:275`) |
-| **C. Hybrid (recommended)** | Daily job stores a **benchmark snapshot** per (as_of, group): window dates, n included / excluded / hosts, P25/P50/P75 per metric, metric status, median GMV per buyer. It also stores **tag history** (ALG-37). **Tiers, weakest stage and recoverable revenue are computed at read time** from session values plus the current snapshot | Yes: read time picks the snapshot for the filtered group | Yes: a grade = f(session values, snapshot for that as_of). Snapshots are kept, never overwritten | One small row per group per day. Read-time grading is a comparison against 3 numbers. Aggregate tiers work for any selection |
+| **C. Hybrid (recommended)** | Daily job stores a **benchmark snapshot** per (as_of, group): window dates, n included / excluded / hosts, P25/P50/P75 per metric, metric status, median GMV per buyer. **Tiers, weakest stage and recoverable revenue are computed at read time** from session values plus the current snapshot | Yes: read time picks the snapshot for the filtered group | Yes: a grade = f(session values, snapshot for that as_of). Snapshots are kept, never overwritten | One small row per group per day. Read-time grading is a comparison against 3 numbers. Aggregate tiers work for any selection |
 
 **Recommendation: C.**
-- Tag history must be stored anyway, because hysteresis needs yesterday's state.
 - Benchmark snapshots must be stored with window dates anyway (`spec:275`).
 - Everything else is a cheap pure function of stored inputs, so step 06's reference implementation and the BE share one definition.
 
@@ -975,7 +948,7 @@ Kept facts: GMV/session LisaWang 10.64 → **11×** (11–13×); AOV LisaWang **
 | 11 | Host exposure per session | round2 (ALG-31) | Rounded to an integer before comparing | `gen:276` |
 | 12 | Host CVR tier | Pooled Σ entered ≥ 30 (PROPOSED, ALG-36) | Needs ≥ 3 sessions | `gen:302` |
 | 13 | Borderline | Exact arithmetic (C1) | Float division `≤ .10` | `gen:299-300` |
-| 14 | Hysteresis, change marker, tag history | Required (`spec:699`, `spec:706`) | None: one snapshot only | whole file (no match for "hyster" or "history") |
+| 14 | Hysteresis, change marker, tag history | None: removed (DQ-34, decision 0010), although the spec requires them (`spec:699`, `spec:706`) | None: one snapshot only | whole file (no match for "hyster" or "history"; agrees) |
 | 15 | Annual GMV | From the platform MCP; not available (ALG-27) | Last-12-months GMV × random 3.5–5.0 | `gen:312`, `gen:315` |
 | 16 | Benchmark snapshot window | [as_of − 89, as_of] (ALG-12) | `w_from = AS_OF − 89` | `gen:249` (agrees) |
 
@@ -985,9 +958,9 @@ Every item below is also in [decision-queue.md](decision-queue.md) as **PROPOSED
 
 | DQ | Gap or contradiction | Options | Recommendation | Owner | Rules |
 |---|---|---|---|---|---|
-| DQ-8 | **R24 vs §7.2/§12.** R24 says "hosts without sessions hidden" (`spec:1000`); §7.2 says they are "listed last with 'No lives in this range'" (`spec:579`), and so do §12 (`spec:936`) and the demo scenario (`spec:1087`) | a) hide; b) list last | **b**: three later, more detailed passages agree, and a demo scenario exists | Rey | ALG-30 |
-| DQ-9 | Which hosts exist for "no lives in range"? The room export only knows hosts that went live | a) any landed session ever; b) a session in the last N days; c) a host registry (no source) | **a**, for that brand × platform (× type) | Rey | ALG-30 |
-| DQ-10 | The "minimum sample" that greys a leaderboard host is undefined (`spec:579`) | a) tag eligibility (≥ 3 sessions and ≥ 10 orders); b) per-cell pooled minimums only; c) ≥ 1 session | **a** for the row, plus per-cell ALG-22 minimums | Rey | ALG-29, ALG-30 |
+| DQ-8 | Decided by Rey 2026-11-10, revised 2026-11-12 → decision 0010: hosts with no `ok` session in the range are not listed (R24) | | | | ALG-30 |
+| DQ-9 | Decided by Rey 2026-11-10, revised 2026-11-12 → decision 0010: only hosts with ≥ 1 `ok` session in the range appear | | | | ALG-30 |
+| DQ-10 | Decided by Rey 2026-11-10, revised 2026-11-12 → decision 0010: greyed = < 3 `ok` sessions or < 10 paid orders in the range; tiers null, tag "Not enough data" | | | | ALG-29, ALG-30, ALG-32 |
 | DQ-11 | Rounding: mode, which values, and whether percentiles are rounded; only "4 decimals before grading" is decided (0004 item 4) | a) half up, exact decimal, round once (ALG-03); b) half even; c) round only at display | **a** | Claude Code drafts, Rey approves | ALG-03, ALG-14 |
 | DQ-12 | Does a stage (or CVR, AOV, exposure) need ≥ 20 qualifying sessions? The spec is silent (`spec:273-274`) | a) yes, per metric; b) no: any qualifying count once the group has 20 | **a**: percentiles of 3 values are not a benchmark | Rey | ALG-18, ALG-32 |
 | DQ-13 | CVR, AOV and exposure populations and minimums are not stated | CVR: entered ≥ 30 or > 0; AOV: orders ≥ 1 or ≥ 3; exposure: all | **CVR entered ≥ 30; AOV orders ≥ 1; exposure all `ok`** | Rey | ALG-15 |
@@ -998,10 +971,10 @@ Every item below is also in [decision-queue.md](decision-queue.md) as **PROPOSED
 | DQ-18 | Weakest stage: second tie (same tier and same UV lost); no stage graded | Earlier stage, later stage, or "none" | **Earlier stage; null when nothing graded** | Rey | ALG-24 |
 | DQ-19 | Aggregate tiers have no stated minimum | a) stage minimums on pooled inputs; b) none | **a** | Rey | ALG-22, ALG-36 |
 | DQ-20 | The "no pooled All types group" fallback (`spec:276`, `spec:935`, `spec:654`) can't trigger with room-export data; 0004's "supersedes" note on it was Claude Code's wording | a) drop it; b) implement it anyway | **a** | Rey | ALG-28 |
-| DQ-21 | Hysteresis details: first calculation, status transitions, missed days | As in ALG-34, or require 2 days for status changes too | **As in ALG-34** (status values apply at once, per `spec:717-718`) | Rey | ALG-34 |
-| DQ-22 | The change marker's "↑" has no defined direction (`spec:699`) | a) no arrow; b) an order of tags; c) arrow = AOV direction | **a** until UX decides | Rey (UX) | ALG-35 |
-| DQ-23 | Host CVR tier: group, window, minimum | Influencer group + tag window, or filter group + time range | **Influencer group, tag window, Σ entered ≥ 30** | Rey | ALG-36 |
-| DQ-24 | What the time-range presets are relative to | a) `as_of`; b) calendar today | **a**: today's partial data would otherwise look like a drop | Rey | ALG-38 |
+| DQ-21 | Moot: Rey removed hysteresis on 2026-11-12 (DQ-34, decision 0010) | | | | ALG-34 (removed) |
+| DQ-22 | Moot: Rey removed the change marker on 2026-11-12 (DQ-34, decision 0010) | | | | ALG-35 (removed) |
+| DQ-23 | Host CVR tier: group and minimum (the host value now uses the range and the P25/P50/P75 the benchmark, per decisions 0010 and 0011) | Influencer group vs the group the filters define | **Influencer group, Σ entered ≥ 30** | Rey | ALG-36 |
+| DQ-24 | Decided by Rey 2026-11-12 → decision 0011: presets end on `as_of` (yesterday, T-1) | | | | ALG-38 |
 | DQ-25 | Week definition, "≤ 6 months", partial gates | ISO Mon–Sun vs Sun–Sat; 6 calendar months vs 183 days | **ISO Mon–Sun; 6 calendar months; partial gates labelled** | Rey | ALG-38 |
 | DQ-26 | MoM/YoY month-end handling; change when prev = 0 | Clamp vs roll forward; null vs ∞ | **Clamp; null** | Rey | ALG-39 |
 | DQ-27 | Room-export fields for stage ⑤ and refund rate: kept buyers and refunded orders are not in the reported columns ([room-export.md](data-model/room-export.md)) | Derive (ALG-01, ALG-07, ALG-08) or add fields to the export | **Derive as proposed; verify against a real header** (also R36 / G3 provisional retention, `spec:1012`, `spec:1182`) | Rey + data owner | ALG-01, ALG-07 |
@@ -1010,6 +983,7 @@ Every item below is also in [decision-queue.md](decision-queue.md) as **PROPOSED
 | DQ-30 | Drafted by Claude Code 2026-11-10 → ALG-41 and decision 0009 (PROPOSED; Rey approves) | Threshold, metric set and zh wording: see 0009 › Open questions | **ALG-41** | Claude Code drafts, Rey approves | ALG-41, BE-24 |
 | DQ-31 | Leaderboard rank ties | `host_id` vs name vs sessions | **`host_id` ascending** (stable) | Rey | ALG-30 |
 | DQ-32 | Avg watch time column and its unit | Per entered user vs per viewer-minute | **Verify against a real header** (UNVERIFIED) | Rey + data owner | ALG-08 |
-| DQ-33 | How `as_of` is set | a) the latest complete export day from the file log; b) the sync date − 1 | **a** (UNVERIFIED: file-log fields are TBD, [scope.md](scope.md)) | Rey + data owner | C4, ALG-12 |
-| DQ-34 | Spec Q7: the map follows the time range or only the 90-day tag (`spec:1041`) | Official tag only in v1, or both | **Official tag only in v1** | Rey | ALG-31 |
+| DQ-33 | `as_of` = yesterday is decided (Rey 2026-11-12, decision 0011). Still open: what Serve returns when yesterday's files have not landed | a) `as_of` stays yesterday and the freshness line (BE-16) says the day is incomplete; b) hold `as_of` at the last complete day | **a**: keeps the T-1 rule (UNVERIFIED: file-log fields are TBD, [scope.md](scope.md)) | Rey + data owner | C4, ALG-12 |
+| DQ-34 | Decided by Rey 2026-11-12 → decision 0010: the tag is the range quadrant against the P50 of the Influencer group's range sessions; leaderboard tag = map colour; no hysteresis, change marker or tag history | | | | ALG-31…ALG-37 |
 | DQ-35 | Spec Q4: 90 days and 20 sessions confirmed? A longer window for self-operated (G9)? (`spec:1038`) | Keep A3, or a longer self-operated window | **Keep 90 / 20 for all groups in v1** | Rey | ALG-12, ALG-17 |
+| DQ-38 | Range tag thresholds: when are they "not available"? A P50 over very few range sessions (e.g. Last 7 days) is not a stable line | a) ≥ 20 `ok` Influencer-group sessions in the range, else "Benchmark building"; b) no minimum; c) the 90-day group status (ALG-17) | **a**: the same 20 as ALG-17, applied to the population that gives the lines | Rey | ALG-32 |
