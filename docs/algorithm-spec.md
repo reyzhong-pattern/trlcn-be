@@ -670,7 +670,7 @@ Result: **#1 H1, #2 H2, #3 H3**, then the collapsed row **"1 host with no lives 
 ### ALG-31 Tag inputs and thresholds
 
 **Definition** (`spec:676-683`, `spec:712-726`):
-- **Window:** always the group's **current 90-day window**, never the time range. Redrawing the map for the selected range is spec Q7 (`spec:1041`), out of v1 (DQ-34).
+- **Window:** the **official tag** always uses the group's **current 90-day window**, never the time range. The influencer map follows the selected range (see **Influencer map** below; DQ-34, ACCEPTED by Rey 2026-11-12).
 - **Group:** Brand × Platform × **Influencer**, whatever the Type filter (`spec:557`).
 - **Host inputs:**
   - `exposure_per_session = round2(Σ exposed ÷ sessions)`
@@ -684,6 +684,23 @@ Result: **#1 H1, #2 H2, #3 H3**, then the collapsed row **"1 host with no lives 
 **Edge cases.** A host can have a tag and still show no lives in the selected range, because the tag window ≠ the range.
 
 **Example.** Group P50 exposure per session **20,000.00**, P50 AOV **300.00**. Host X has 5 sessions, 40 orders, exposure / session 25,000.00 and AOV 280.00.
+
+**Influencer map** (DQ-34, ACCEPTED by Rey 2026-11-12; answers spec Q7, `spec:1041`; map sketch `spec:540-549`):
+- **Dots:** one dot per influencer with **≥ 1 `ok` session in the selected range**. An influencer with none gets no dot.
+- **Position:** the host's pooled `exposure_per_session` and `pooled_aov` (formulas above) computed over its `ok` sessions **in the range**, not the tag window.
+- **Quadrant lines:** the Influencer group's P50 of exposure per session and P50 of AOV from the **current 90-day window**, the same thresholds as the official tag.
+- **Dot colour:** the host's **official 90-day tag** (ALG-34), including the status values.
+- **Hollow dot:** < 3 `ok` sessions or < 10 paid orders **in the range**, the same rule as leaderboard greying (DQ-10, ALG-30).
+  - Hollow dots are **hidden by default**, behind a control "Show N hosts with too little data", where N is the number of hollow dots.
+- **Range quadrant:** the quadrant the dot's position falls in against the quadrant lines (ALG-33 rule, ties high, no hysteresis).
+- **Tooltip:** shows the official tag. When the range quadrant differs, it shows that too.
+- Group Building → no quadrant lines and no tags (ALG-32). Dots are still placed, which is UNVERIFIED as wanted; confirm in review.
+- A host with 0 paid orders in the range has no AOV, so it cannot be placed. It is always hollow (< 10 orders). PROPOSED: it counts in N but draws no dot even when shown.
+
+**Map example** (P50s 20,000.00 / 300.00):
+- Host X has an official tag of Traffic Engine. In the range it has 4 sessions and 30 orders, exposure / session 18,000.00 and AOV 320.00, which puts it in the range quadrant **Premium Niche**. Its dot is solid, coloured Traffic Engine, and the tooltip shows both "Traffic Engine (90-day tag)" and "Premium Niche in this range".
+- Host Y has 2 sessions in the range → hollow, hidden. The control reads "Show 1 host with too little data".
+- Host Z has no `ok` session in the range → no dot, even if it has an official tag.
 
 ### ALG-32 Tag eligibility
 
