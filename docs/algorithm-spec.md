@@ -616,12 +616,12 @@ Both are correct; the view names the group.
 | Paid orders | Σ paid_orders |
 | Best session GMV | max gmv |
 
-- Funnel cells of **graded** rows are tiered with ALG-22 against the group the filters define (`spec:557`, `spec:573`). Greyed rows (ALG-30, DQ-10) show their rates with "n/a" tier cells.
+- Funnel cells of **graded** rows are tiered with ALG-22 against the group the filters define (`spec:557`, `spec:573`). Greyed rows (ALG-30, DQ-10) return their rates with tier null.
 - The CVR column has no tier (`spec:571`).
 
 **Not enough data.** For a graded row, per cell: ALG-22. A greyed row (ALG-30) gets no tiers at all. Per-cell grading of ①–③ for greyed rows is Day 2 (DQ-36).
 
-**Edge cases.** A host with no `ok` sessions in the range, **on its leaderboard row and in its Host drawer**: rates null, every metric cell "—", "No lives in this range" (ALG-30). It has no dot on the influencer map (ALG-31).
+**Edge cases.** A host with no `ok` sessions in the range, **on its leaderboard row and in its Host drawer**: every metric value is null and the row is marked as having no lives in the range (ALG-30). It has no point on the influencer map (ALG-31). FE: per hi-fi.
 
 **Example.** Host H1 = S-A + S-B:
 - Sessions 2, GMV **4,700.00**, Avg GMV / session **2,350.00**, AOV **293.75**, CVR **0.0350**.
@@ -631,23 +631,25 @@ Both are correct; the view names the group.
 
 ### ALG-30 Leaderboard membership, rank and greying
 
-Decision 0010 (`docs/decisions/0010-host-analysis-display.md`). There are two dimensions, never mixed:
+Decision 0010 (`docs/decisions/0010-host-analysis-data.md`). There are two dimensions, never mixed:
 - **Which hosts appear and their values** follow the window and the selected range (this rule).
 - **Tag appearance** follows only the official 90-day tag (ALG-31…ALG-36).
 
 **Definition.**
-- **Which hosts appear** (DQ-9, ACCEPTED by Rey 2026-11-10). The leaderboard lists every host of the brand × platform (and of the Type filter's type) with **≥ 1 `ok` session in the current window [as_of − 89, as_of]** (ALG-12). Hosts with ≥ 1 `ok` session in the selected range are always listed too. Usually that set already falls inside the window; it differs only for a range that reaches before the window. The Hosts filter limits the rows (`spec:215`).
-- **Hosts with no lives in the range** (DQ-8, ACCEPTED by Rey 2026-11-10). A listed host with no `ok` session in the range is an **individual row**. It shows:
-  - the host name;
+- **Which hosts appear** (DQ-9, Rey 2026-11-10; PROPOSED until Rey accepts). The leaderboard lists every host of the brand × platform (and of the Type filter's type) with **≥ 1 `ok` session in the current window [as_of − 89, as_of]** (ALG-12). Hosts with ≥ 1 `ok` session in the selected range are always listed too. Usually that set already falls inside the window; it differs only for a range that reaches before the window. The Hosts filter limits the rows (`spec:215`).
+- **Hosts with no lives in the range** (DQ-8, Rey 2026-11-10; PROPOSED until Rey accepts). A listed host with no `ok` session in the range is an **individual row**. It returns:
+  - the host;
   - a rank after all hosts with lives, among themselves ordered by `host_id`;
-  - "—" in every metric cell;
-  - "No lives in this range";
-  - the "Not enough data" badge.
+  - every metric value null;
+  - "no lives in range" = true;
+  - grading status "Not enough data".
+
+  FE: per hi-fi.
 
   This overrides R24's "hosts without sessions hidden" (`spec:1000`). It follows §7.2 (`spec:579`) and §12 (`spec:936`).
 - **Rank.** Hosts with lives in the range come first, by Total GMV descending, with ties → `host_id` ascending (PROPOSED, DQ-31). Then the hosts with no lives, by `host_id`. Every row has a rank (`spec:566`, `spec:579`).
-- **Greying** (DQ-10, ACCEPTED by Rey 2026-11-10). **Leaderboard and Host drawer only, and range-based.** A row is greyed "Not enough data" when the host has **fewer than 3 `ok` sessions or fewer than 10 paid orders in the range** (the thresholds of `spec:703`).
-  - A greyed row shows its values (ALG-29) with "Not enough data" and **no tiers**: tier cells show "n/a". The Host drawer does the same.
+- **Greying** (DQ-10, Rey 2026-11-10; PROPOSED until Rey accepts). **Leaderboard and Host drawer only, and range-based.** A row is greyed "Not enough data" when the host has **fewer than 3 `ok` sessions or fewer than 10 paid orders in the range** (the thresholds of `spec:703`).
+  - A greyed row returns its values (ALG-29), grading status "Not enough data" and **no tiers** (tier null). The Host drawer does the same.
   - A no-lives row is greyed by this rule (0 sessions).
   - Greying is **not** used for the influencer map (ALG-31).
   - Per-cell grading of ①–③ for greyed rows is Day 2 (DQ-36, PROPOSED).
@@ -669,7 +671,7 @@ Decision 0010 (`docs/decisions/0010-host-analysis-display.md`). There are two di
 - H4: no session in the range, last `ok` session 2026-09-15 (inside the window).
 - H5: last `ok` session 2026-06-01 (outside the window).
 
-Result: **#1 H1, #2 H2, #3 H3, #4 H4**. H4's row shows "—" in every metric cell, "No lives in this range" and "Not enough data". H5 is not listed.
+Result: **#1 H1, #2 H2, #3 H3, #4 H4**. H4's row has every metric value null, "no lives in range" = true and grading status "Not enough data". H5 is not listed.
 - H1 is ahead of H2 because their GMV ties and `host_id` H1 < H2.
 - H1 (2 sessions), H3 (1 session) and H4 (0 sessions) are greyed. H2 is graded.
 - In the Hosts filter: H1 (2), H2 (3), H3 (1), H4 (0).
@@ -679,7 +681,7 @@ Result: **#1 H1, #2 H2, #3 H3, #4 H4**. H4's row shows "—" in every metric cel
 ### ALG-31 Tag inputs and thresholds
 
 **Definition** (`spec:676-683`, `spec:712-726`):
-- **Window:** the **official tag** always uses the group's **current 90-day window**, never the time range. The influencer map takes its **position and visibility** from the selected range and its **appearance** from the official tag (see **Influencer map** below; DQ-34, ACCEPTED by Rey 2026-11-12).
+- **Window:** the **official tag** always uses the group's **current 90-day window**, never the time range. The influencer map takes its **position and visibility** from the selected range and its **appearance** from the official tag (see **Influencer map** below; DQ-34, Rey 2026-11-12; PROPOSED until Rey accepts).
 - **Group:** Brand × Platform × **Influencer**, whatever the Type filter (`spec:557`).
 - **Host inputs:**
   - `exposure_per_session = round2(Σ exposed ÷ sessions)`
@@ -694,30 +696,28 @@ Result: **#1 H1, #2 H2, #3 H3, #4 H4**. H4's row shows "—" in every metric cel
 
 **Example.** Group P50 exposure per session **20,000.00**, P50 AOV **300.00**. Host X has 5 sessions, 40 orders, exposure / session 25,000.00 and AOV 280.00.
 
-**Influencer map** (DQ-34, ACCEPTED by Rey 2026-11-12; decision 0010; answers spec Q7, `spec:1041`; map sketch `spec:540-549`). There are two dimensions, never mixed.
+**Influencer map** (DQ-34, Rey 2026-11-12; PROPOSED until Rey accepts; decision 0010; answers spec Q7, `spec:1041`; map sketch `spec:540-549`). There are two dimensions, never mixed.
 
 *Position and visibility: the selected range only.*
-- **Dots:** one dot per influencer with **≥ 1 `ok` session in the range**. An influencer with none has **no dot**, even if it has an official tag.
+- **Points:** one point per influencer with **≥ 1 `ok` session in the range**. An influencer with none has **no point**, even if it has an official tag.
 - **Position:** the host's pooled `exposure_per_session` and `pooled_aov` (formulas above), over its `ok` sessions **in the range**.
 - **Quadrant lines:** the Influencer group's P50 of exposure per session and P50 of AOV from the **current 90-day window**, the same thresholds as the official tag.
-- **Range quadrant:** the quadrant the position falls in against those lines (ALG-33 rule, ties high, no hysteresis). The tooltip shows it next to the official tag when they differ (DQ-34).
+- **Range quadrant:** the quadrant the position falls in against those lines (ALG-33 rule, ties high, no hysteresis). Returned with the point, next to the official tag (DQ-34).
 
-*Appearance: the official 90-day tag only (ALG-32…ALG-36).*
-- **Colour:** the official tag (ALG-34).
-- **Hollow:** the official tag is "Not enough data", i.e. < 3 `ok` sessions or < 10 paid orders **in the 90-day window** (ALG-32), so the host has no tag yet. A hollow dot is drawn like any other and can be clicked to open the Host drawer.
-- **Ring:** borderline (ALG-33), from the 90-day inputs.
-- Leaderboard greying (DQ-10, ALG-30) is **not** used here. A host can be greyed on the leaderboard for the range yet have a solid dot, or the other way round.
+*Tag values: the official 90-day tag only (ALG-32…ALG-36).*
+- **Tag:** the official tag (ALG-34), or "Not enough data" when the host has < 3 `ok` sessions or < 10 paid orders **in the 90-day window** (ALG-32).
+- **Borderline:** ALG-33, from the 90-day inputs.
+- Leaderboard greying (DQ-10, ALG-30) is **not** used here. A host can be greyed on the leaderboard for the range yet have a tag, or the other way round.
+- How a point looks (colour, hollow, ring, size, tooltip, click): FE: per hi-fi.
 
 *Edge cases.*
-- Group Building → no quadrant lines and no tags (ALG-32). Dots are still placed; UNVERIFIED as wanted.
-- A host with ≥ 1 `ok` session but 0 paid orders in the range has no AOV, so it cannot be placed. PROPOSED: it has no dot.
-- Dot size: the spec legend says "bubble size = GMV" (`spec:549`). PROPOSED: GMV in the range, since size is not one of the appearance properties above. UNVERIFIED.
+- Group Building → no quadrant lines and no tags (ALG-32).
 
 **Map example** (P50s 20,000.00 / 300.00):
-- Host X has an official tag of Traffic Engine. In the range it has 4 sessions and 30 orders, exposure / session 18,000.00 and AOV 320.00, so its range quadrant is **Premium Niche**. Its dot is solid, coloured Traffic Engine, and the tooltip shows "Traffic Engine" and "Premium Niche in this range".
-- Host Y has an official tag of "Not enough data" (2 sessions in the 90-day window) and 2 sessions in the range → a **hollow** dot at its range position. It is clickable.
-- Host W has an official tag of Flagship, but only 1 session and 4 orders in the range → a **solid** Flagship dot at its range position. On the leaderboard it is greyed (DQ-10).
-- Host Z has no `ok` session in the range → **no dot**.
+- Host X has an official tag of Traffic Engine. In the range it has 4 sessions and 30 orders, exposure / session 18,000.00 and AOV 320.00, so its range quadrant is **Premium Niche**. Its point returns tag Traffic Engine and range quadrant Premium Niche.
+- Host Y has an official tag of "Not enough data" (2 sessions in the 90-day window) and 2 sessions in the range → a point at its range position with tag "Not enough data".
+- Host W has an official tag of Flagship, but only 1 session and 4 orders in the range → a point at its range position with tag Flagship. On the leaderboard it is greyed (DQ-10).
+- Host Z has no `ok` session in the range → **no point**.
 
 ### ALG-32 Tag eligibility
 
