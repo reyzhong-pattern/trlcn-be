@@ -9,8 +9,7 @@
 ## Context
 
 - The spec leaves open which hosts the leaderboard and the influencer map show, and how hosts with little data look (`upstream/design-pack/03-product-spec-v0.4.md:566-579`, `:703`, `:936`, Q7 at `:1041`).
-- Reference: the hi-fi mockup, version `1794283411-4173`, board `project/Host-Analysis.dc.html`, as named by Rey.
-  - Claude Code could only read version `1793933571-41ce` of that board (see Evidence).
+- Reference: the hi-fi mockup, artifact `Y6meVMkfzS7bB1NL7mszHB` at version `1794283411-4173` (as in `upstream/PIN.md`), board `project/Host-Analysis.dc.html`, as named by Rey.
 - Evidence for DQ-9 and DQ-10: count audit 2026-11-10 (KC and THORNE room exports; not in this repo).
 
 ## Decision
@@ -53,7 +52,7 @@
 
 - Rey's instructions of 2026-11-10 and 2026-11-12, copied by Claude Code.
 - Count audit 2026-11-10 (numbers as Rey gave them; not in this repo).
-- Mockup board `project/Host-Analysis.dc.html`. The read on 2026-11-12 served version `1793933571-41ce`, not `1794283411-4173`; that board's range is "Last 90 days". In it:
+- Mockup board `project/Host-Analysis.dc.html`, verified 2026-11-12 against artifact `Y6meVMkfzS7bB1NL7mszHB` at version `1794283411-4173` (an earlier read used a different artifact, which served `1793933571-41ce`; the points below are the same in both). The board's range is "Last 90 days". In it:
   - the no-lives host (李娜老师讲修行(臻健来)) is rank 14 of 14, with Sessions "0", "—" in the other metric cells, "No lives in this range" and a "Not enough data" badge;
   - 11 map dots for 14 hosts, none for the no-lives host;
   - "Not enough data" dots are transparent with a 2px grey border and are buttons;
