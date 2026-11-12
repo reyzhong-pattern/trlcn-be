@@ -12,7 +12,7 @@ Each Action Card's body has an **Expected recovery** column: "¥ and UV if the s
 
 Decision 0004 says the mockup's behaviour wins where the spec is silent. The mockup gives no formula, but it does show concrete numbers. The figures on board "1.4 Session drawer — Action Cards" (`project/Session-drawer-Action-Cards.dc.html`, session S00234, graded against Thorne × Douyin × All types) are reproduced exactly by one formula: move the stage's rate to the target, then carry the extra people through **the session's own downstream rates** to paid buyers, and multiply by the session's GMV per buyer.
 
-Evidence note: the artifact read on 2026-11-10 served version `1793933571-41ce`, not the pinned `1794210096-60c6` (`upstream/PIN.md`). The board's numbers are fixed values in its source, not computed there, so they show the *behaviour*, not code. Everything in the cross-check below is recomputed from those values.
+Evidence note: verified on 2026-11-12 against the hi-fi in `upstream/PIN.md`, artifact `Y6meVMkfzS7bB1NL7mszHB` at version `1794283411-4173`: board 1.4 shows the same figures as the table below. (The 2026-11-10 read used a different artifact, which served `1793933571-41ce`.) The board's numbers are fixed values in its source, not computed there, so they show the *behaviour*, not code. Everything in the cross-check below is recomputed from those values.
 
 ## Decision (proposed)
 

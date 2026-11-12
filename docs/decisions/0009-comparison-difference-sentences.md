@@ -12,7 +12,7 @@
 - **Host comparison:** "1–3 sentences computed from the numbers, from per-language templates" (`upstream/design-pack/03-product-spec-v0.4.md:653`).
 - Generated text comes from per-language templates, never from translating English output (`upstream/design-pack/03-product-spec-v0.4.md:177`).
 
-**What the mockup shows** (artifact read 2026-11-10, served version `1793933571-41ce`, not the pinned `1794210096-60c6`). Both sentences are **fixed strings**, not computed:
+**What the mockup shows** (verified 2026-11-12 against artifact `Y6meVMkfzS7bB1NL7mszHB` at version `1794283411-4173`, as in `upstream/PIN.md`; both sentences are the same as in the 2026-11-10 read of a different artifact, `1793933571-41ce`). Both sentences are **fixed strings**, not computed:
 - Board 1.1 Overview, channel comparison (`project/Main.dc.html`): "self-operated rooms convert entrants about 10× better (CVR 2.23% vs 0.22%), while influencer sessions bring in 2.8× the entry rate and 2.1× the GMV per session."
 - Board 1.9 Comparison panel, 4 hosts (`project/Comparison-panel.dc.html`): "Thorne悦恩运动极限海外店 converts entrants 7–12× better than the three influencers (CVR 1.99% vs 0.17–0.30%). LisaWang（15号悦恩活动） brings the largest basket (AOV ¥2,115) and the most GMV (¥1.04M)."
 
