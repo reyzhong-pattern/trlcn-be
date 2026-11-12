@@ -33,6 +33,9 @@ Backend for **TrendVision Live — Performance Analytics** (Session Analytics, H
 8. **Two separate answers.** Health tier (STAR/GOOD/MID/WEAK) and recoverable revenue (¥) are separate outputs, computed separately, and never combined into one score.
 9. **LLMs explain, the pipeline computes.** An LLM may explain numbers (for example Action Card text), but never computes, rounds, estimates or changes them. Every number shown comes from the Score layer.
 10. **No database connections from agents during bootstrap tasks** unless the task file explicitly allows it. Which Supabase schemas the build uses is decided during building.
+11. **BE returns state; FE renders it.** Specs, decisions and the contract describe data only: fields, enums, nulls, counts, ordering. Never rendering: no colours, borders, "—", badges, tooltips, click behaviour or UI copy beyond an enum or template key. If a hi-fi detail is display only, write "FE: per hi-fi" and stop.
+12. **Mockup gate.** Before deriving anything from the hi-fi, check that the artifact ID **and** the served version match [upstream/PIN.md](upstream/PIN.md). If either differs, derive nothing: mark it UNVERIFIED and ask Rey. An edge case Rey states in the prompt beats any mockup read.
+13. **No new DQ, decision or doc unless** (a) Rey asked for it by ID, (b) a BE number or field cannot be computed without it, or (c) the spec and an ACCEPTED decision contradict each other. Otherwise put it under "Open questions" in the PR. A fix edits existing lines; it does not add files.
 
 ## Source-of-truth order
 

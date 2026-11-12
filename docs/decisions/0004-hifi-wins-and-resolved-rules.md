@@ -8,7 +8,7 @@
 
 ## Context
 
-The spec, the hi-fi mockup (claude.ai artifact KrA5rxAQxzQhpCdtjwfyHU, version 1794210096-60c6, reference only — [upstream/PIN.md](../../upstream/PIN.md)) and older methods (the staging app, the demo generator) differ in places.
+The spec, the hi-fi mockup (claude.ai artifact Y6meVMkfzS7bB1NL7mszHB, version 1794283411-4173, reference only — [upstream/PIN.md](../../upstream/PIN.md)) and older methods (the staging app, the demo generator) differ in places.
 
 ## Decision
 
@@ -30,7 +30,7 @@ The spec, the hi-fi mockup (claude.ai artifact KrA5rxAQxzQhpCdtjwfyHU, version 1
 
 - The demo generator differs on items 1, 2, 3 and 7 (it uses the 90 days before each session, excludes the session itself, has no All types group, and grades session tier when entered > 0: `upstream/design-pack/generate_demo_data.py:209`, `:237`). Its outputs are never expected values ([tests/golden/README.md](../../tests/golden/README.md)).
 - "Linear interpolation" is the definition behind e.g. numpy's default `percentile` method; the exact formula is written into [algorithm-spec.md](../algorithm-spec.md).
-- Claims about the mockup's behaviour must name version 1794210096-60c6 or be marked UNVERIFIED.
+- Claims about the mockup's behaviour must name artifact Y6meVMkfzS7bB1NL7mszHB at version 1794283411-4173 (as in [upstream/PIN.md](../../upstream/PIN.md)) or be marked UNVERIFIED. *(Citation corrected 2026-11-12: the earlier ID KrA5rxAQxzQhpCdtjwfyHU was a different artifact. The decision itself is unchanged.)*
 
 ## Evidence
 
