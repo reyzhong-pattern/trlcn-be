@@ -1,7 +1,7 @@
 # 0010: Host Analysis data: three checks per host
 
 - **Status:** PROPOSED (decided by Rey in writing; Rey sets ACCEPTED, AGENTS.md rule 2)
-- **Decided by:** Rey, 2026-11-10 (DQ-8, DQ-9, DQ-10), 2026-11-12 (DQ-34) and 2026-11-13 (DQ-8, DQ-9 and DQ-10 revised: the three checks below)
+- **Decided by:** Rey, 2026-11-10 (DQ-8, DQ-9, DQ-10), 2026-11-12 (DQ-34) and 2026-11-13 (DQ-8, DQ-9 and DQ-10 revised: the three checks below; DQ-39)
 - **Proposed by:** Claude Code (step-05 algorithm spec), revised by Rey
 - **Requirement IDs:** R24, R25, R26, R27, R28, BE-11, BE-12, BE-17, BE-23
 - **Supersedes / overrides:**
@@ -30,7 +30,7 @@ Then each listed host goes through three checks, in order.
 2. **Enough data? (DQ-10)** Counted over **[as_of − 89, as_of]**:
    - **< 3 `ok` sessions or < 10 paid orders → "Not enough data"**: values still returned, tiers null, tag "Not enough data". Leaderboard, Host drawer and map.
    - Otherwise: tiers and tag as below.
-   - Open: which window this means (DQ-39).
+   - The same window for every range, even one that ends before `as_of` (Last month, a Custom end date) (DQ-39). Rejected: the 90 days ending on the range's last day.
 3. **Tag = quadrant (DQ-34).**
    - The quadrant of the host's **range** exposure per session and AOV, against the **P50 of the Influencer group's `ok` sessions in the range** (Q2 = b).
    - The leaderboard tag and the map colour are the **same value**.
@@ -62,6 +62,5 @@ Then each listed host goes through three checks, in order.
 
 ## Open questions
 
-- **DQ-39:** "enough data" window: [as_of − 89, as_of], or the 90 days ending on the range's last day? They differ only when the range ends before `as_of` (Last month, a Custom end date).
 - DQ-38: minimum and Building status for the range P50 lines (for example Last 7 days with few influencer sessions).
 - DQ-36 (Day 2): per-cell grading of ①–③ for hosts with "Not enough data".

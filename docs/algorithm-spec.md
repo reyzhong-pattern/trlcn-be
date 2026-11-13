@@ -642,7 +642,7 @@ Decision 0010 (Rey 2026-11-13; PROPOSED until Rey accepts).
   - **Yes:** a row with range values (ALG-29). Influencers get a map point (ALG-31). The host can be compared.
   - **No:** a host-only row: every metric value null, "no lives in range" = true, no tiers, no tag. No map point. It cannot be compared.
 - **Rank.** Hosts with lives first, by range Total GMV descending; ties → `host_id` ascending (PROPOSED, DQ-31). Then hosts with no lives in the range, by `host_id` ascending. Every listed host has a rank (`spec:566`).
-- **Check 2: enough data** (DQ-10). A host with lives in the range has "Not enough data" when it has **fewer than 3 `ok` sessions or fewer than 10 paid orders in [as_of − 89, as_of]** (the thresholds of `spec:703`; window: DQ-39, Open). Such a host:
+- **Check 2: enough data** (DQ-10). A host with lives in the range has "Not enough data" when it has **fewer than 3 `ok` sessions or fewer than 10 paid orders in [as_of − 89, as_of]** (the thresholds of `spec:703`; the same window for every range, even one that ends before `as_of`: DQ-39, Rey 2026-11-13). Such a host:
   - returns its range values (ALG-29) with **no tiers** (tier null), on the leaderboard and in the Host drawer;
   - has the tag "Not enough data" if it is an influencer (ALG-32), the same value as its map point.
   - Per-cell grading of ①–③ for these hosts is Day 2 (DQ-36, PROPOSED).
@@ -704,7 +704,7 @@ Decision 0010 (DQ-34, Rey 2026-11-12; PROPOSED until Rey accepts). The tag uses 
 1. Self-operated → "Not tagged".
 2. No `ok` session in the range → no tag ("no lives in range", ALG-30 check 1).
 3. The range thresholds are not available → "Benchmark building". When that is: PROPOSED (DQ-38): fewer than 20 `ok` Influencer-group sessions in the range.
-4. Host has fewer than 3 `ok` sessions or fewer than 10 paid orders in **[as_of − 89, as_of]** → "Not enough data" (ALG-30 check 2; window: DQ-39).
+4. Host has fewer than 3 `ok` sessions or fewer than 10 paid orders in **[as_of − 89, as_of]** → "Not enough data" (ALG-30 check 2; DQ-39).
 5. Otherwise → a quadrant (ALG-33), from range values.
 
 **Not enough data.** As defined above.
@@ -994,4 +994,4 @@ Every item below is also in [decision-queue.md](decision-queue.md) as **PROPOSED
 | DQ-34 | Decided by Rey 2026-11-12 → decision 0010: the tag is the range quadrant against the P50 of the Influencer group's range sessions; leaderboard tag = map colour; no hysteresis, change marker or tag history | | | | ALG-31…ALG-37 |
 | DQ-35 | Spec Q4: 90 days and 20 sessions confirmed? A longer window for self-operated (G9)? (`spec:1038`) | Keep A3, or a longer self-operated window | **Keep 90 / 20 for all groups in v1** | Rey | ALG-12, ALG-17 |
 | DQ-38 | Range tag thresholds: when are they "not available"? A P50 over very few range sessions (e.g. Last 7 days) is not a stable line | a) ≥ 20 `ok` Influencer-group sessions in the range, else "Benchmark building"; b) no minimum; c) the 90-day group status (ALG-17) | **a**: the same 20 as ALG-17, applied to the population that gives the lines | Rey | ALG-32 |
-| DQ-39 | "Enough data" window (DQ-10): which 90 days? | a) [as_of − 89, as_of]; b) [range end − 89, range end] | **a**: one status per host per day; they differ only when the range ends before `as_of` | Rey | ALG-30, ALG-32 |
+| DQ-39 | Decided by Rey 2026-11-13 → decision 0010: the "enough data" window is [as_of − 89, as_of] for every range (option a) | | | | ALG-30, ALG-32 |
